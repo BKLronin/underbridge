@@ -12,9 +12,12 @@ inport = 0
 outport = 0
 path = 0
 folder = 0
+pattern_nr = 0
 j = 0
 mode_select=0
 addsec = 0
+projectpath = 0
+
 
 def getMIDIDevice():
     pass
@@ -37,10 +40,10 @@ def setLoop():
 
 def setParam():
     setLoop()
-    mode = mode_select.get()
-    if mode == 2:
-        projnr = project_input.get()
-        setProject(projnr)
+    #mode = mode_select.get()
+    #if mode == 2:
+    #    projnr = project_input.get()
+    #    setProject(projnr)
 
 def openMidi():    
     global outport          
@@ -75,6 +78,13 @@ def stop_MIDI():
     outport.send(msg)
     displaymsg.set("Playback stopped")
 
+def unmuteAll():
+    global outport
+    for i in range (0,15):
+        msg = mido.Message('control_change',control= 53, channel= i, value=0)
+        outport.send(msg)
+        
+
 def nextPattern():
     global outport
     msg = mido.Message('control_change', control = 103, value = 16)
@@ -96,14 +106,23 @@ def setPath():
 
 def makeDir():
     global folder
+    global projectpath
     folder = name_input.get()
-    os.mkdir(folder)
+    projectpath = path + '/' + folder
+    os.mkdir(projectpath)   
+
+def makeDirNr(pattern_nr):    
+    global projectpath    
+    projectpath = projectpath +  '/' + str(pattern_nr) #Pfad wird addiert deswegen zusötzliche verzeichnisse
+    os.mkdir(projectpath)    
+    print(projectpath)
 
 def start_Rec():
     displaymsg.set("Recording...")
     global path
     global time
     global j
+    global pro
     CHUNK = 1024
     FORMAT = pyaudio.paInt16
     CHANNELS = 2
@@ -134,7 +153,7 @@ def start_Rec():
     stream.close()
     p.terminate()
 
-    wf = wave.open(path + '/'+ folder + '/' + WAVE_OUTPUT_FILENAME, 'wb')
+    wf = wave.open(projectpath + '/'+ WAVE_OUTPUT_FILENAME, 'wb')
     wf.setnchannels(CHANNELS)
     wf.setsampwidth(p.get_sample_size(FORMAT))
     wf.setframerate(RATE)
@@ -144,11 +163,13 @@ def start_Rec():
     displaymsg.set("End of Recording")
 
 def sequenceMaster():
-    print("test")
-    
+    global pattern_nr
+    #print("test")    
+    if mode_select.get() == 2:
+        makeDirNr(pattern_nr)    
 
     for i in range (0,8):
-        print("sequence started",i)
+        #print("sequence started",i)
         displaymsg.set("Sequence started")
         openMidi()
         muteAll()
@@ -159,10 +180,14 @@ def sequenceMaster():
         stop_MIDI()
         mode = mode_select.get()        
         if i == 7 and mode == 2: 
-            print(mode_select)
+            #print(mode_select)
             stop_MIDI()
+            unmuteAll()
             time.sleep(5)
             nextPattern()
+            pattern_nr += 1
+            if pattern_nr == 9:
+                pattern_nr = 0
             sequenceMaster()      
             
 
