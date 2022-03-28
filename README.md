@@ -1,7 +1,8 @@
 # Underbridge for OP-Z
 ## Multitrack exporter
+---
 
-## Despriciption
+## Description
 
 - Exports Patterns and projects individual Audio Tracks to seperate folders for use in your DAW
 - Python cross plattform with single file binary for x86 linux
