@@ -51,8 +51,9 @@ def setParam():
     #    setProject(projnr)
 
 def openMidi():    
-    global outport          
-    outport= mido.open_output('OP-Z:OP-Z MIDI 1 20:0')
+    global outport  
+    outport= mido.open_output('OP-Z:OP-Z MIDI 1 20:0')    
+    displaymsg.set("OP-Z MIDI not connected :(")
     print(outport) 
 
 def setProject(projnr):
@@ -185,34 +186,37 @@ def sequenceMaster():
     cancel = 0
     #print("test")
     displaymsg.set("Sequence started")
-    openMidi()
-        
-    if mode_select.get() == 2:
-        makeDirNr(pattern_nr)    
+    try:
+        openMidi()
+            
+        if mode_select.get() == 2:
+            makeDirNr(pattern_nr)    
 
-    for i in range (0,8): #
-        pattern_limit = patterns_input.get() 
-        if cancel == 1 or pattern_nr == pattern_limit:
-            break
-        #print("sequence started",i)       
-        muteAll()
-        setSolo(i)
-        #starting Midi during wave record for timing        
-        start_Rec()       
-        #print(i)
-        stop_MIDI()
-        unmuteAll()
-        mode = mode_select.get()                
-        
-        if i == 7 and mode == 2: 
-            #print(mode_select)            
-            time.sleep(5)
-            nextPattern()
-            pattern_nr += 1
-            if pattern_nr == 9 :
-                pattern_nr = 0
-            sequenceMaster()
-        
+        for i in range (0,8): #
+            pattern_limit = patterns_input.get() 
+            if cancel == 1 or pattern_nr == pattern_limit:
+                break
+            #print("sequence started",i)       
+            muteAll()
+            setSolo(i)
+            #starting Midi during wave record for timing        
+            start_Rec()       
+            #print(i)
+            stop_MIDI()
+            unmuteAll()
+            mode = mode_select.get()                
+            
+            if i == 7 and mode == 2: 
+                #print(mode_select)            
+                time.sleep(5)
+                nextPattern()
+                pattern_nr += 1
+                if pattern_nr == 9 :
+                    pattern_nr = 0
+                sequenceMaster()
+    except:
+        displaymsg.set("OP-Z connection Problem :(")
+
 def cancelRec():
     global cancel
     global j
@@ -220,7 +224,7 @@ def cancelRec():
     cancel = 1  
 
 #GUI Main
-buttonsize_x = 8
+buttonsize_x = 7
 buttonsize_y = 2
 mode_select = 0
 
@@ -229,14 +233,14 @@ root.title('underbridge for OP-Z')
 root.resizable(width=False, height=False) #565A5E
 root.tk_setPalette(background='#565A5E', foreground='black',activeBackground='#283867', activeForeground='black' )
 
-upperframe= LabelFrame(root, text= "Parameter",padx= 10, pady =10, fg = 'white')
-upperframe.grid(row = 0, column = 0, padx =2, pady =2, columnspan=7)
+upperframe= LabelFrame(root, text= "Parameter",padx= 10, pady =2, fg = 'white')
+upperframe.grid(row = 0, column = 0, padx =2, pady =2,)
 
-lowerframe= Frame(root,padx= 10, pady =10)
-lowerframe.grid(row = 1, column = 0, padx =2, pady =2, columnspan=7)
+lowerframe= Frame(root,padx= 10, pady =5)
+lowerframe.grid(row = 1, column = 0, padx =2, pady =2)
 
-footer= Frame(root,padx= 15, pady =10)
-footer. grid(row = 2, column = 0, padx =2, pady =2, columnspan=7)
+footer= Frame(root,padx= 15, pady =2)
+footer. grid(row = 2, column = 0, padx =2, pady =2)
 
 mode_select = IntVar()
 displaymsg = StringVar()
@@ -274,21 +278,21 @@ set_param = Button(lowerframe, text="set Param",width = buttonsize_x, height = b
 set_path = Button(lowerframe, text="Directory",width = buttonsize_x, height = buttonsize_y,fg = 'white',bg= '#0095FF', command = lambda:setPath())
 start_recording = Button(lowerframe, text="RECORD",width = buttonsize_x, height = buttonsize_y,fg = 'white', bg = '#FF2200', command = lambda:threading.Thread(target = sequenceMaster).start())
 
-tutorial = Label(footer,text="Enter Parameter, then press set Param, choose directory and start recording", width = 70, height = 2, bg ='grey',fg= 'white', relief = SUNKEN)
-display = Label(footer,textvariable= displaymsg, width = 15, height = 2, bg ='white', relief = SUNKEN)
+tutorial = Label(footer,text="Enter Parameter, then press set Param, choose directory and start recording", height = 2, bg ='grey',fg= 'white', relief = SUNKEN)
+display = Label(lowerframe,textvariable= displaymsg,width = 60, height = buttonsize_y -1, bg ='lightgrey', relief = FLAT)
 
 cancel = Button(lowerframe,text = "CANCEL" , width = buttonsize_x, height = buttonsize_y, bg ='#FFCC00', fg= 'white', command = lambda: cancelRec())
-cancel.grid(row = 1, column = 6, padx =2, pady =2)
+cancel.grid(row = 0, column = 6, padx =2, pady =2)
 
-donate = Label(footer, text= "donate <3 @ https://link.raise-uav.com", width= 40, height = 1)
-donate.grid(row = 3, column = 5, padx =2, pady =2, columnspan=2)
+donate = Label(footer, text= "donate <3 @ https://link.raise-uav.com", height = 1)
+donate.grid(row = 3, column = 4, padx =2, pady =10, columnspan=2)
 
 
 #Get_BPM.grid(row = 1, column = 0, padx =2, pady =2)
 
 #ALL.grid()
-Song.grid(row = 1, column = 1, padx =5, pady =2)
-Pattern.grid(row = 1, column = 2, padx =5, pady =2)
+Song.grid(row = 0, column = 1, padx =5, pady =2)
+Pattern.grid(row = 0, column = 2, padx =5, pady =2)
 
 name_input.grid(row = 0, column = 0, padx =5, pady =0)
 #name_text.grid(row = 1, column = 2, padx =0, pady =0)
@@ -306,11 +310,11 @@ patterns_input.grid(row = 0, column = 4, padx =5, pady =2)
 add_sec.grid(row = 0, column = 5, padx =5, pady =2)
 #add_text.grid(row = 1, column = 0, padx =0, pady =0)
 
-set_param.grid(row = 1, column = 3, padx =5, pady =5)
-set_path.grid(row = 1, column = 4, padx =5, pady =5)
-start_recording.grid(row = 1, column = 5, padx =5, pady =5)
+set_param.grid(row = 0, column = 3, padx =5, pady =2)
+set_path.grid(row = 0, column = 4, padx =5, pady =2)
+start_recording.grid(row = 0, column = 5, padx =5, pady =2)
 
-tutorial.grid(row = 2, column = 0, padx =2, pady =5, columnspan=6)
-display.grid(row = 3, column = 0, padx =2, pady =5)
+tutorial.grid(row = 1, column = 0, padx =5, pady =5, columnspan=5)
+display.grid(row = 1, column = 0, padx =2, pady =10, columnspan= 7)
 
 root.mainloop()
