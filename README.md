@@ -7,10 +7,15 @@
 - Exports Patterns and projects individual Audio Tracks to seperate folders for use in your DAW
 - Python cross plattform with single file binary for x86 linux
 
-## Steps
+## Steps for single file binary
 
 - connect OP-Z via USB
 - run underbridge.fun
+
+## Steps for python file
+
+- install pyaudio library
+- install midio library
 
 ### Single Pattern Mode
 
@@ -27,7 +32,9 @@
 
 - choose first pattern in your project as starting point
 - Select project mode
-- Everything else like above
+- Everything else like 
+
+
 
 
 
