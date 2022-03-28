@@ -183,14 +183,18 @@ def sequenceMaster():
     global cancel
     global pattern_nr
     cancel = 0
-    #print("test")    
+    #print("test")
+    displaymsg.set("Sequence started")
+    openMidi()
+        
     if mode_select.get() == 2:
         makeDirNr(pattern_nr)    
 
-    for i in range (0,8):
-        #print("sequence started",i)
-        displaymsg.set("Sequence started")
-        openMidi()
+    for i in range (0,8): #
+        pattern_limit = patterns_input.get() 
+        if cancel == 1 or pattern_nr == pattern_limit:
+            break
+        #print("sequence started",i)       
         muteAll()
         setSolo(i)
         #starting Midi during wave record for timing        
@@ -198,7 +202,8 @@ def sequenceMaster():
         #print(i)
         stop_MIDI()
         unmuteAll()
-        mode = mode_select.get()        
+        mode = mode_select.get()                
+        
         if i == 7 and mode == 2: 
             #print(mode_select)            
             time.sleep(5)
@@ -207,10 +212,7 @@ def sequenceMaster():
             if pattern_nr == 9 :
                 pattern_nr = 0
             sequenceMaster()
-
-        if cancel == 1:
-            break
-
+        
 def cancelRec():
     global cancel
     global j
@@ -251,6 +253,7 @@ bar_input = Scale(upperframe, from_ = 1, to = 4, orient = HORIZONTAL, label="Nr.
 #bar_text = Label(upperframe,text="Nr. of Bars", width = 8, height = 1)
 
 patterns_input = Scale(upperframe, from_ = 1, to = 10, orient = HORIZONTAL, label="Patterns",sliderlength= 10, length= 75, fg = 'white')
+patterns_input.set(value=10)
 
 bpm_input = Entry(upperframe, width =10, text="BPM",bg= 'white')
 #bpm_text = Label(upperframe,text="BPM", width = 8, height = 1)
@@ -267,14 +270,14 @@ name_input = Entry(upperframe, width =10, text="Name",bg = 'white')
 name_input.insert(0, "Name")
 #name_text = Label(upperframe,text="Prj Name", width = 8, height = 1)
 
-set_param = Button(lowerframe, text="set Param",width = buttonsize_x, height = buttonsize_y, fg = 'white',bg= 'blue', command = lambda:setParam())
-set_path = Button(lowerframe, text="Directory",width = buttonsize_x, height = buttonsize_y,fg = 'white',bg= 'blue', command = lambda:setPath())
-start_recording = Button(lowerframe, text="RECORD",width = buttonsize_x, height = buttonsize_y,fg = 'white', bg = 'red', command = lambda:threading.Thread(target = sequenceMaster).start())
+set_param = Button(lowerframe, text="set Param",width = buttonsize_x, height = buttonsize_y, fg = 'white',bg= '#0095FF', command = lambda:setParam())
+set_path = Button(lowerframe, text="Directory",width = buttonsize_x, height = buttonsize_y,fg = 'white',bg= '#0095FF', command = lambda:setPath())
+start_recording = Button(lowerframe, text="RECORD",width = buttonsize_x, height = buttonsize_y,fg = 'white', bg = '#FF2200', command = lambda:threading.Thread(target = sequenceMaster).start())
 
-tutorial = Label(footer,text="Enter Parameter, then press set_length, choose directory and start recording", width = 75, height = 2, bg ='grey',fg= 'white', relief = SUNKEN)
+tutorial = Label(footer,text="Enter Parameter, then press set Param, choose directory and start recording", width = 75, height = 2, bg ='grey',fg= 'white', relief = SUNKEN)
 display = Label(footer,textvariable= displaymsg, width = 15, height = 2, bg ='white', relief = SUNKEN)
 
-cancel = Button(lowerframe,text = "CANCEL" , width = buttonsize_x, height = buttonsize_y, bg ='grey', fg= 'white', command = lambda: cancelRec())
+cancel = Button(lowerframe,text = "CANCEL" , width = buttonsize_x, height = buttonsize_y, bg ='#FFCC00', fg= 'white', command = lambda: cancelRec())
 cancel.grid(row = 1, column = 6, padx =2, pady =2)
 
 donate = Label(footer, text= "donate <3 @ https://link.raise-uav.com", width= 40, height = 1)
