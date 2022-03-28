@@ -232,7 +232,7 @@ root.tk_setPalette(background='#565A5E', foreground='black',activeBackground='#2
 upperframe= LabelFrame(root, text= "Parameter",padx= 10, pady =10, fg = 'white')
 upperframe.grid(row = 0, column = 0, padx =2, pady =2, columnspan=7)
 
-lowerframe= Frame(root,padx= 15, pady =10)
+lowerframe= Frame(root,padx= 10, pady =10)
 lowerframe.grid(row = 1, column = 0, padx =2, pady =2, columnspan=7)
 
 footer= Frame(root,padx= 15, pady =10)
@@ -274,7 +274,7 @@ set_param = Button(lowerframe, text="set Param",width = buttonsize_x, height = b
 set_path = Button(lowerframe, text="Directory",width = buttonsize_x, height = buttonsize_y,fg = 'white',bg= '#0095FF', command = lambda:setPath())
 start_recording = Button(lowerframe, text="RECORD",width = buttonsize_x, height = buttonsize_y,fg = 'white', bg = '#FF2200', command = lambda:threading.Thread(target = sequenceMaster).start())
 
-tutorial = Label(footer,text="Enter Parameter, then press set Param, choose directory and start recording", width = 75, height = 2, bg ='grey',fg= 'white', relief = SUNKEN)
+tutorial = Label(footer,text="Enter Parameter, then press set Param, choose directory and start recording", width = 70, height = 2, bg ='grey',fg= 'white', relief = SUNKEN)
 display = Label(footer,textvariable= displaymsg, width = 15, height = 2, bg ='white', relief = SUNKEN)
 
 cancel = Button(lowerframe,text = "CANCEL" , width = buttonsize_x, height = buttonsize_y, bg ='#FFCC00', fg= 'white', command = lambda: cancelRec())
@@ -306,11 +306,11 @@ patterns_input.grid(row = 0, column = 4, padx =5, pady =2)
 add_sec.grid(row = 0, column = 5, padx =5, pady =2)
 #add_text.grid(row = 1, column = 0, padx =0, pady =0)
 
-set_param.grid(row = 1, column = 3, padx =5, pady =10)
-set_path.grid(row = 1, column = 4, padx =5, pady =10)
-start_recording.grid(row = 1, column = 5, padx =5, pady =10)
+set_param.grid(row = 1, column = 3, padx =5, pady =5)
+set_path.grid(row = 1, column = 4, padx =5, pady =5)
+start_recording.grid(row = 1, column = 5, padx =5, pady =5)
 
-tutorial.grid(row = 2, column = 0, padx =2, pady =10, columnspan=7)
+tutorial.grid(row = 2, column = 0, padx =2, pady =5, columnspan=6)
 display.grid(row = 3, column = 0, padx =2, pady =5)
 
 root.mainloop()
