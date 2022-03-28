@@ -113,8 +113,9 @@ def makeDir():
 
 def makeDirNr(pattern_nr):    
     global projectpath    
-    projectpath = projectpath +  '/' + str(pattern_nr) #Pfad wird addiert deswegen zusötzliche verzeichnisse
-    os.mkdir(projectpath)    
+    #Pfad wird addiert deswegen zusätzliche verzeichnisse
+    #projectpath = projectpath + '/' + str(pattern_nr)
+    os.mkdir(projectpath + '/' + str(pattern_nr)) 
     print(projectpath)
 
 def start_Rec():
@@ -123,6 +124,7 @@ def start_Rec():
     global time
     global j
     global pro
+    global pattern_nr
     CHUNK = 1024
     FORMAT = pyaudio.paInt16
     CHANNELS = 2
@@ -152,14 +154,19 @@ def start_Rec():
     stream.stop_stream()
     stream.close()
     p.terminate()
+    if mode_select.get() == 2:
+        wf = wave.open(projectpath + '/' + str(pattern_nr) + '/' + WAVE_OUTPUT_FILENAME, 'wb')
+    else:
+        wf = wave.open(projectpath + '/' + WAVE_OUTPUT_FILENAME, 'wb')
 
-    wf = wave.open(projectpath + '/'+ WAVE_OUTPUT_FILENAME, 'wb')
     wf.setnchannels(CHANNELS)
     wf.setsampwidth(p.get_sample_size(FORMAT))
     wf.setframerate(RATE)
     wf.writeframes(b''.join(frames))
     wf.close()
     j = j + 1
+    if j == 8:
+        j= 0
     displaymsg.set("End of Recording")
 
 def sequenceMaster():
