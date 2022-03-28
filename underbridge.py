@@ -1,3 +1,7 @@
+# Underbridge OP-Z multichannel exporter
+# Copyright 2022 Thomas Herrmann Email: herrmann@raise-uav.com
+
+
 import mido
 import pyaudio
 import wave
@@ -17,16 +21,17 @@ j = 0
 mode_select=0
 addsec = 0
 projectpath = 0
+cancel = 0
 
 
-def getMIDIDevice():
+def getMIDIDevice():   
     pass
 
 
 def getBPM():
     inport= mido.open_input('OP-Z:OP-Z MIDI 1 20:0')
     msg = inport.poll()
-    print(msg)
+    #print(msg)
 
 def setLoop():
     global loop_time
@@ -82,8 +87,7 @@ def unmuteAll():
     global outport
     for i in range (0,15):
         msg = mido.Message('control_change',control= 53, channel= i, value=0)
-        outport.send(msg)
-        
+        outport.send(msg)        
 
 def nextPattern():
     global outport
@@ -109,14 +113,20 @@ def makeDir():
     global projectpath
     folder = name_input.get()
     projectpath = path + '/' + folder
-    os.mkdir(projectpath)   
+    try:    
+        os.mkdir(projectpath)   
+    except:
+        displaymsg.set("Directory Error")
 
 def makeDirNr(pattern_nr):    
     global projectpath    
     #Pfad wird addiert deswegen zusätzliche verzeichnisse
     #projectpath = projectpath + '/' + str(pattern_nr)
-    os.mkdir(projectpath + '/' + str(pattern_nr)) 
-    print(projectpath)
+    try:
+        os.mkdir(projectpath + '/' + str(pattern_nr)) 
+    except:
+        displaymsg.set("Directory Error")
+    #print(projectpath)
 
 def start_Rec():
     displaymsg.set("Recording...")
@@ -133,7 +143,7 @@ def start_Rec():
     WAVE_OUTPUT_FILENAME =  name_input.get()+ "_" + "track" + str(j+1) + ".wav"
     
     p = pyaudio.PyAudio()
-
+    start_MIDI()
     stream = p.open(format=FORMAT,
                     channels=CHANNELS,
                     rate=RATE,
@@ -141,15 +151,15 @@ def start_Rec():
                     frames_per_buffer=CHUNK
                     )
 
-    print("* recording")
-    start_MIDI()
+    #print("* recording")
+    
     frames = []
 
     for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
         data = stream.read(CHUNK)
         frames.append(data)
 
-    print("Done recording")
+    #print("Done recording")
 
     stream.stop_stream()
     stream.close()
@@ -170,7 +180,9 @@ def start_Rec():
     displaymsg.set("End of Recording")
 
 def sequenceMaster():
+    global cancel
     global pattern_nr
+    cancel = 0
     #print("test")    
     if mode_select.get() == 2:
         makeDirNr(pattern_nr)    
@@ -182,21 +194,28 @@ def sequenceMaster():
         muteAll()
         setSolo(i)
         #starting Midi during wave record for timing        
-        start_Rec()
+        start_Rec()       
         #print(i)
         stop_MIDI()
+        unmuteAll()
         mode = mode_select.get()        
         if i == 7 and mode == 2: 
-            #print(mode_select)
-            stop_MIDI()
-            unmuteAll()
+            #print(mode_select)            
             time.sleep(5)
             nextPattern()
             pattern_nr += 1
-            if pattern_nr == 9:
+            if pattern_nr == 9 :
                 pattern_nr = 0
-            sequenceMaster()      
-            
+            sequenceMaster()
+
+        if cancel == 1:
+            break
+
+def cancelRec():
+    global cancel
+    global j
+    j = 0
+    cancel = 1  
 
 #GUI Main
 buttonsize_x = 8
@@ -213,6 +232,9 @@ upperframe.grid(row = 0, column = 0, padx =2, pady =2, columnspan=7)
 
 lowerframe= Frame(root,padx= 15, pady =10)
 lowerframe.grid(row = 1, column = 0, padx =2, pady =2, columnspan=7)
+
+footer= Frame(root,padx= 15, pady =10)
+footer. grid(row = 2, column = 0, padx =2, pady =2, columnspan=7)
 
 mode_select = IntVar()
 displaymsg = StringVar()
@@ -247,15 +269,21 @@ name_input.insert(0, "Name")
 
 set_param = Button(lowerframe, text="set Param",width = buttonsize_x, height = buttonsize_y, fg = 'white',bg= 'blue', command = lambda:setParam())
 set_path = Button(lowerframe, text="Directory",width = buttonsize_x, height = buttonsize_y,fg = 'white',bg= 'blue', command = lambda:setPath())
-start_recording = Button(lowerframe, text="Record",width = buttonsize_x, height = buttonsize_y,fg = 'white', bg = 'red', command = lambda: threading.Thread(target = sequenceMaster()).start())
+start_recording = Button(lowerframe, text="RECORD",width = buttonsize_x, height = buttonsize_y,fg = 'white', bg = 'red', command = lambda:threading.Thread(target = sequenceMaster).start())
 
-tutorial = Label(root,text="Enter Parameter, then press set_length, choose directory and start recording", width = 75, height = 2, bg ='grey',fg= 'white', relief = SUNKEN)
-display = Label(root,textvariable= displaymsg, width = 75, height = 2, bg ='white', relief = SUNKEN)
+tutorial = Label(footer,text="Enter Parameter, then press set_length, choose directory and start recording", width = 75, height = 2, bg ='grey',fg= 'white', relief = SUNKEN)
+display = Label(footer,textvariable= displaymsg, width = 15, height = 2, bg ='white', relief = SUNKEN)
+
+cancel = Button(lowerframe,text = "CANCEL" , width = buttonsize_x, height = buttonsize_y, bg ='grey', fg= 'white', command = lambda: cancelRec())
+cancel.grid(row = 1, column = 6, padx =2, pady =2)
+
+donate = Label(footer, text= "donate <3 @ https://link.raise-uav.com", width= 40, height = 1)
+donate.grid(row = 3, column = 5, padx =2, pady =2, columnspan=2)
 
 
 #Get_BPM.grid(row = 1, column = 0, padx =2, pady =2)
 
-#ALL.grid(row = 1, column = 0, padx =5, pady =2)
+#ALL.grid()
 Song.grid(row = 1, column = 1, padx =5, pady =2)
 Pattern.grid(row = 1, column = 2, padx =5, pady =2)
 
@@ -280,6 +308,6 @@ set_path.grid(row = 1, column = 4, padx =5, pady =10)
 start_recording.grid(row = 1, column = 5, padx =5, pady =10)
 
 tutorial.grid(row = 2, column = 0, padx =2, pady =10, columnspan=7)
-display.grid(row = 3, column = 0, padx =2, pady =2, columnspan=7)
+display.grid(row = 3, column = 0, padx =2, pady =5)
 
 root.mainloop()
