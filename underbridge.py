@@ -35,12 +35,15 @@ def getBPM():
 
 def setLoop():
     global loop_time
-    bpm = bpm_input.get()
-    bar = bar_input.get()
-    addsec = add_sec.get()
-    loop_time = (240 / int(bpm) * int(bar)) + int(addsec)
-    print("Loop time set!")
-    displaymsg.set("BPM Set!")
+    try:
+        bpm = bpm_input.get()
+        bar = bar_input.get()
+        addsec = add_sec.get()
+        loop_time = (240 / int(bpm) * int(bar)) + int(addsec)
+        print("Loop time set!")
+        displaymsg.set("BPM Set!")
+    except:
+        displaymsg.set("Please enter accurate BPM.")
     return time
 
 def setParam():
@@ -106,7 +109,7 @@ def setPath():
     global path
     folder = name_input.get()
     path = fd.askdirectory()    
-    displaymsg.set("Directory set")
+    displaymsg.set("Directory set!")
     makeDir()
 
 def makeDir():
@@ -117,7 +120,7 @@ def makeDir():
     try:    
         os.mkdir(projectpath)   
     except:
-        displaymsg.set("Directory Error")
+        displaymsg.set("Directory Error. Please enter different Name.")
 
 def makeDirNr(pattern_nr):    
     global projectpath    
@@ -246,7 +249,7 @@ mode_select = IntVar()
 displaymsg = StringVar()
 #root.geometry('550x150+0+0')
 
-Get_BPM = Button(upperframe, text="Get BPM",width = buttonsize_x, height = buttonsize_y, fg = 'white', command = lambda:getBPM())
+Get_BPM = Button(upperframe, text="Get BPM",width = buttonsize_x, height = buttonsize_y, fg = 'lightgrey', command = lambda:getBPM())
 
 #ALL = Radiobutton(lowerframe, text= 'ALL', value = 1 , variable = mode_select, width = buttonsize_x, height = buttonsize_y , indicatoron = 0, bg= '#1b7d24' )
 Song = Radiobutton(lowerframe, text= 'Project', value = 2 , variable = mode_select, width = buttonsize_x, height = buttonsize_y , indicatoron = 0, bg= '#1b7d24' )
@@ -259,7 +262,7 @@ bar_input = Scale(upperframe, from_ = 1, to = 4, orient = HORIZONTAL, label="Nr.
 patterns_input = Scale(upperframe, from_ = 1, to = 10, orient = HORIZONTAL, label="Patterns",sliderlength= 10, length= 75, fg = 'white')
 patterns_input.set(value=10)
 
-bpm_input = Entry(upperframe, width =10, text="BPM",bg= 'white')
+bpm_input = Entry(upperframe, width =10, text="BPM",bg= 'lightgrey', relief= FLAT)
 #bpm_text = Label(upperframe,text="BPM", width = 8, height = 1)
 bpm_input.insert(0, "BPM")
 
@@ -270,15 +273,15 @@ bpm_input.insert(0, "BPM")
 add_sec = Scale(upperframe, from_ = 0, to = 10, orient = HORIZONTAL, label="extra Sec", sliderlength= 10, length= 75, fg = 'white')
 #add_text = Label(upperframe,text="Sec offset", width = 8, height = 1)
 
-name_input = Entry(upperframe, width =10, text="Name",bg = 'white')
+name_input = Entry(upperframe, width =10, text="Name",bg = 'lightgrey', relief= FLAT)
 name_input.insert(0, "Name")
 #name_text = Label(upperframe,text="Prj Name", width = 8, height = 1)
 
-set_param = Button(lowerframe, text="set Param",width = buttonsize_x, height = buttonsize_y, fg = 'white',bg= '#0095FF', command = lambda:setParam())
+set_param = Button(lowerframe, text="Set Prmtr",width = buttonsize_x, height = buttonsize_y, fg = 'white',bg= '#0095FF', command = lambda:setParam())
 set_path = Button(lowerframe, text="Directory",width = buttonsize_x, height = buttonsize_y,fg = 'white',bg= '#0095FF', command = lambda:setPath())
 start_recording = Button(lowerframe, text="RECORD",width = buttonsize_x, height = buttonsize_y,fg = 'white', bg = '#FF2200', command = lambda:threading.Thread(target = sequenceMaster).start())
 
-tutorial = Label(footer,text="Enter Parameter, then press set Param, choose directory and start recording", height = 2, bg ='grey',fg= 'white', relief = SUNKEN)
+tutorial = Label(footer,text="Enter Parameter, then press set Param, choose directory and start recording", height = 2, bg ='grey',fg= 'white', relief = FLAT)
 display = Label(lowerframe,textvariable= displaymsg,width = 60, height = buttonsize_y -1, bg ='lightgrey', relief = FLAT)
 
 cancel = Button(lowerframe,text = "CANCEL" , width = buttonsize_x, height = buttonsize_y, bg ='#FFCC00', fg= 'white', command = lambda: cancelRec())
