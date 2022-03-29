@@ -1,2 +1,4 @@
 /build/
 *.spec
+/__pycache__/
+/_resources/
