@@ -7,8 +7,30 @@
 - Exports patterns and projects individual audio tracks to seperate folders for use in your DAW.
 - Python cross plattform with single file binary for x86 linux.
 
-## Installation 
-### Ubuntu 20.10 LTS (If the binary in /dist doesn't work)
+## Using Packaged single file Binarys _(The easy way)_
+
+- Executables reside in the folder `/dist/` 
+- on WIndows
+    `underbridge.exe`
+- On Linux:
+``./underbridge``
+
+Underbridge_alt was packaged on a different system. Might help if you run into problems.
+
+## Installation _(Less easy way)_
+
+### Windows
+- Install Python 3.9 if not already 3.10 seems to cause problems
+- install mido :  `pip install mido`
+- install rt-midi: `pip isntall rt-midi`
+- install pipwin: `pip install pipwin`
+- install pyaudio `pipwin install pyaudio`
+
+<!-- Activate OP-Z device input in sound settings of windows and make it default -->
+
+- run `python underbridge.py`
+
+### Ubuntu 20.10 LTS 
 
 `sudo apt  install portaudio19-dev`
 `sudo apt install python3-tk`
@@ -17,17 +39,10 @@
 
 `python3 underbridge.py` to start
 
-### Linux binary
-
-``./underbridge``
-
-Underbridge_alt was packaged on a different system. Might help if you run into problems.
-
 ## Steps
 
 - connect OP-Z via USB
-- in /dist/ directory run ``./underbridge``
-- Alternatively python3 underbridge.py in root directory. Make sure you have installed dependencies before..
+- Run underbridge
 
 ### Single Pattern Mode
 
