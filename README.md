@@ -2,15 +2,15 @@
 ## Multitrack exporter
 ---
 
-## Despcription
+## Description
 
 - Exports patterns and projects individual audio tracks to seperate folders for use in your DAW.
 - Python cross plattform with single file binary for x86 linux.
 
 ## Using Packaged single file Binarys _(The easy way)_
 
-- Executables reside in the folder `/dist/` 
-- on WIndows
+- Executables reside in the folder `/dist/`
+- on Windows
     `underbridge.exe`
 - On Linux:
 ``./underbridge``
@@ -20,17 +20,18 @@ Underbridge_alt was packaged on a different system. Might help if you run into p
 ## Installation _(Less easy way)_
 
 ### Windows
-- Install Python 3.9 if not already 3.10 seems to cause problems
+
+- Install Python 3.9 if not already, 3.10 seems to cause problems.
 - install mido :  `pip install mido`
 - install rt-midi: `pip isntall rt-midi`
 - install pipwin: `pip install pipwin`
 - install pyaudio `pipwin install pyaudio`
 
-<!-- Activate OP-Z device input in sound settings of windows and make it default -->
+**Activate OP-Z device input in sound settings of windows and make it default**
 
 - run `python underbridge.py`
 
-### Ubuntu 20.10 LTS 
+### Ubuntu 20.10 LTS
 
 `sudo apt  install portaudio19-dev`
 `sudo apt install python3-tk`
@@ -60,15 +61,10 @@ Underbridge_alt was packaged on a different system. Might help if you run into p
 - Select Porject and first Pattern you want to export on OP-Z.
 - Enter name for the project. This is used for the folder structure
 - Get BPM from led code or Smartphone app.
-- Enter BPM 
+- Enter BPM
 - Enter longest Bar of you track (1-4)
 - Enter the Nr. of Patterns your song consists of.
 - Optionally enter additional seconds at the end of the recording to capture reverb tails etc.
 - Select project mode
 - Select directory you want to record the waves to
 - Click record and wait until finished.
-
-
-
-
-
