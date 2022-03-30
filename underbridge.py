@@ -159,15 +159,14 @@ def start_Rec():
     global j
     global pro
     global pattern_nr
-    CHUNK = 1024
+    CHUNK = 128
     FORMAT = pyaudio.paInt16
     CHANNELS = 2
-    RATE = 44100
+    RATE = 48000
     RECORD_SECONDS = loop_time
     WAVE_OUTPUT_FILENAME =  name_input.get()+ "_" + "track" + str(j+1) + ".wav"
     
-    p = pyaudio.PyAudio()
-    start_MIDI()
+    p = pyaudio.PyAudio()   
     stream = p.open(format=FORMAT,
                     channels=CHANNELS,
                     rate=RATE,
@@ -178,7 +177,7 @@ def start_Rec():
     #print("* recording")
     
     frames = []
-
+    start_MIDI()
     for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
         data = stream.read(CHUNK)
         frames.append(data)
