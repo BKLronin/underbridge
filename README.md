@@ -7,7 +7,7 @@
 - Exports Patterns and projects individual Audio Tracks to seperate folders for use in your DAW
 - Python cross plattform with single file binary for x86 linux
 
-![underbridge.jpg](:/5c0c93594d274c389d9290d79f1c542a)
+![underbridge.jpg](:/underbridge.jpg)
 
 ## Installation 
 ### Ubuntu 20.10 LTS (If the binary in /dist doesn't work)
