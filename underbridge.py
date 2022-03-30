@@ -10,6 +10,8 @@ import time
 import threading
 import os
 
+device_list = []
+op_device = []
 loop_time = 0
 inport = 0
 outport = 0
@@ -24,11 +26,22 @@ cancel = 0
 
 
 def getMIDIDevice():   
-    pass
+    global device_list
+    global op_device
+    device_list = mido.get_output_names()
+    print (device_list)
+    try: 
+        op_device = list(filter(lambda x: 'OP-Z' in x, device_list))        
+        op_device = op_device[0]
+        print (op_device)
+        displaymsg.set("OP-Z found")
+    except:
+        displaymsg.set("Can´t find OP-Z : MIDI Error")
 
 
 def getBPM():
-    inport= mido.open_input('OP-Z:OP-Z MIDI 1 20:0')
+    global op_device
+    inport= mido.open_input(op_device)
     msg = inport.poll()
     #print(msg)
 
@@ -54,8 +67,9 @@ def setParam():
 
 def openMidi():    
     global outport  
-    outport= mido.open_output('OP-Z:OP-Z MIDI 1 20:0')    
-    displaymsg.set("OP-Z MIDI not connected :(")
+    global op_device
+    outport= mido.open_output(op_device)    
+    #displaymsg.set("OP-Z MIDI not connected :(")
     print(outport) 
 
 def setProject(projnr):
@@ -187,8 +201,13 @@ def sequenceMaster():
     global pattern_nr
     cancel = 0
     #print("test")
+
+    getMIDIDevice()
+    time.sleep(1)
+
     displaymsg.set("Sequence started")
-    try:
+
+    try:        
         openMidi()
             
         if mode_select.get() == 2:
@@ -320,5 +339,7 @@ start_recording.grid(row = 0, column = 5, padx =5, pady =2)
 
 tutorial.grid(row = 1, column = 0, padx =5, pady =5, columnspan=5)
 display.grid(row = 1, column = 0, padx =2, pady =10, columnspan= 7)
+
+
 
 root.mainloop()
