@@ -1,7 +1,6 @@
 # Underbridge OP-Z multichannel exporter
 # Copyright 2022 Thomas Herrmann Email: herrmann@raise-uav.com
 
-
 import mido
 import pyaudio
 import wave
@@ -201,11 +200,13 @@ def sequenceMaster():
                 break
             #print("sequence started",i)       
             muteAll()
+            time.sleep(0.1)
             setSolo(i)
             #starting Midi during wave record for timing        
             start_Rec()       
             #print(i)
             stop_MIDI()
+            time.sleep(1)
             unmuteAll()
             mode = mode_select.get()                
             
