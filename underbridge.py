@@ -12,6 +12,7 @@ import os
 
 device_list = []
 op_device = []
+audio_device = []
 loop_time = 0
 inport = 0
 outport = 0
@@ -36,15 +37,25 @@ def getMIDIDevice():
         print (op_device)
         displaymsg.set("OP-Z found")
     except:
-        displaymsg.set("Can´t find OP-Z : MIDI Error")
+        displaymsg.set("Can´t find OP-Z : MIDI Error.")
 
 def getAudioDevice():
+    global audio_device
     p = pyaudio.PyAudio()
-    info = p.get_host_api_info_by_index(0)
-    numdevices = info.get('deviceCount')
-    for i in range(0, numdevices):
-        if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-            print("Input Device id ", i, " - ", p.get_device_info_by_host_api_device_index(0, i).get('name'))
+    try:
+        info = p.get_host_api_info_by_index(0)
+        numdevices = info.get('deviceCount')
+        for i in range(0, numdevices):
+            if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+                print("Input Device id ", i, " - ", p.get_device_info_by_host_api_device_index(0, i).get('name'))
+        for i in range(0, numdevices):
+            #audio_device = p.get_device_info_by_host_api_device_index(0, i).get('name')
+            if "OP-Z" in p.get_device_info_by_host_api_device_index(0, i).get('name') and (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+                audio_device = i
+            
+        print ("Detected OP-Z audio at Index:",audio_device, p.get_device_info_by_host_api_device_index(0, audio_device).get('name'))
+    except:
+        displaymsg.set("OP-Z Audio Device not found.")
 
 def getBPM():
     global op_device
@@ -122,8 +133,10 @@ def nextPattern():
 def nextSong():
     pass
 
-def closeMidi():
-    pass
+def closeMidi():    
+    global outport
+    outport.close()    
+    displaymsg.set("MIDI closed")     
 
 def setPath():
     global path
@@ -159,6 +172,8 @@ def start_Rec():
     global j
     global pro
     global pattern_nr
+    global audio_device
+
     CHUNK = 128
     FORMAT = pyaudio.paInt16
     CHANNELS = 2
@@ -171,7 +186,9 @@ def start_Rec():
                     channels=CHANNELS,
                     rate=RATE,
                     input=True,
+                    input_device_index= audio_device,
                     frames_per_buffer=CHUNK
+                    
                     )
 
     #print("* recording")
@@ -203,6 +220,7 @@ def start_Rec():
     displaymsg.set("End of Recording")
 
 def sequenceMaster():
+    
     global cancel
     global pattern_nr
     cancel = 0
@@ -245,13 +263,15 @@ def sequenceMaster():
                     pattern_nr = 0
                 sequenceMaster()
     except:
-        displaymsg.set("OP-Z Audio Device Problem :(")
+        displaymsg.set("OP-Z Sequence error try restarting the OP-Z or press CANCEL Button")
 
 def cancelRec():
     global cancel
+    global outport
     global j
     j = 0
     cancel = 1  
+    closeMidi()
 
 #GUI Main
 buttonsize_x = 7
