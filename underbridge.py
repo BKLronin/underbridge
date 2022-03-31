@@ -367,6 +367,4 @@ start_recording.grid(row = 0, column = 5, padx =5, pady =2)
 tutorial.grid(row = 1, column = 0, padx =5, pady =5, columnspan=5)
 display.grid(row = 1, column = 0, padx =2, pady =10, columnspan= 7)
 
-
-
 root.mainloop()

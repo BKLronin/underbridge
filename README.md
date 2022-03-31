@@ -15,13 +15,14 @@
 - On Linux:
 ``./underbridge``
 
-Underbridge_alt was packaged on a different system. Might help if you run into problems.
+Underbridge_alt was packaged on a different system. Might help if you run into problems. (Outdated)
 
 ## Installation _(Less easy way)_
 
 ### Windows
 
 - Install Python 3.9 if not already, 3.10 seems to cause problems.
+- install portaudio_dev : `apt install portaudio19-dev`
 - install mido :  `pip install mido`
 - install rt-midi: `pip isntall rt-midi`
 - install pipwin: `pip install pipwin`
@@ -33,10 +34,10 @@ Underbridge_alt was packaged on a different system. Might help if you run into p
 
 ### Ubuntu 20.10 LTS
 
-`sudo apt  install portaudio19-dev`
-`sudo apt install python3-tk`
-`pip install python-rtmidi`
-`pip install pyaudio`
+ - `sudo apt  install portaudio19-dev`
+- `sudo apt install python3-tk`
+- `pip install python-rtmidi`
+- `pip install pyaudio`
 
 `python3 underbridge.py` to start
 
@@ -68,3 +69,6 @@ Underbridge_alt was packaged on a different system. Might help if you run into p
 - Select project mode
 - Select directory you want to record the waves to
 - Click record and wait until finished.
+
+### Troubleshooting
+- When the recorded audio contains buzzing or other artifacts try disabling the USB charging with "display" and "bottom right key" to disable.
