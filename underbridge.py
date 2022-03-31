@@ -62,7 +62,7 @@ def getAudioDevice():
     devinfo = p.get_device_info_by_index(audio_device)  
     try:         
         devinfo = p.get_device_info_by_index(audio_device)  
-        test = p.is_format_supported(48100, input_device=devinfo['index'], input_channels=devinfo['maxInputChannels'],input_format=pyaudio.paInt16)
+        test = p.is_format_supported(48000, input_device=devinfo['index'], input_channels=devinfo['maxInputChannels'],input_format=pyaudio.paInt16)
         RATE = 48000
         print("48kHz")
     except:
