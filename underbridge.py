@@ -24,6 +24,7 @@ mode_select=0
 addsec = 0
 projectpath = 0
 cancel = 0
+RATE = 0
 
 
 def getMIDIDevice():   
@@ -41,6 +42,7 @@ def getMIDIDevice():
 
 def getAudioDevice():
     global audio_device
+    global RATE
     p = pyaudio.PyAudio()
     try:
         info = p.get_host_api_info_by_index(0)
@@ -52,10 +54,20 @@ def getAudioDevice():
             #audio_device = p.get_device_info_by_host_api_device_index(0, i).get('name')
             if "OP-Z" in p.get_device_info_by_host_api_device_index(0, i).get('name') and (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
                 audio_device = i
-            
+        #audio_device = 4           
         print ("Detected OP-Z audio at Index:",audio_device, p.get_device_info_by_host_api_device_index(0, audio_device).get('name'))
     except:
         displaymsg.set("OP-Z Audio Device not found.")
+
+    devinfo = p.get_device_info_by_index(audio_device)  
+    try:         
+        devinfo = p.get_device_info_by_index(audio_device)  
+        test = p.is_format_supported(48100, input_device=devinfo['index'], input_channels=devinfo['maxInputChannels'],input_format=pyaudio.paInt16)
+        RATE = 48000
+        print("48kHz")
+    except:
+        RATE = 44100
+        print("44100kHz compatibility mode")    
 
 def getBPM():
     global op_device
@@ -173,11 +185,12 @@ def start_Rec():
     global pro
     global pattern_nr
     global audio_device
+    global RATE
 
     CHUNK = 128
     FORMAT = pyaudio.paInt16
     CHANNELS = 2
-    RATE = 48000
+    #RATE = 44100
     RECORD_SECONDS = loop_time
     WAVE_OUTPUT_FILENAME =  name_input.get()+ "_" + "track" + str(j+1) + ".wav"
     
