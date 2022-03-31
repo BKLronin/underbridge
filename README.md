@@ -15,6 +15,7 @@
 - On Linux:
 ``./underbridge``
 
+
 Underbridge_alt was packaged on a different system. Might help if you run into problems. (Outdated)
 
 ## Installation _(Less easy way)_
@@ -31,6 +32,18 @@ Underbridge_alt was packaged on a different system. Might help if you run into p
 **Activate OP-Z device input in sound settings of windows and make it default**
 
 - run `python underbridge.py`
+
+### Mac Install - ( tested on Mac OS Monterey 12.3 )
+
+install portaudio: `brew install portaudio`
+install mido: `pip install mido`
+install tk: `brew install python-tk`
+install rt-midi: `pip install python-rtmidi`
+install pyaudio: `pip install pyaudio`
+
+**Set OP-Z device as input in sound of system preferences**
+
+open terminal and type: `python3 underbridge.py` to start
 
 ### Ubuntu 20.10 LTS
 
