@@ -15,6 +15,14 @@
 `pip install python-rtmidi`
 `pip install pyaudio`
 
+### Mac Install
+
+`brew install portaudio`
+`brew install python-tk`
+`pip install python-rtmidi`
+`pip install pyaudio`
+`pip install mido`
+
 `python3 underbridge.py` to start
 
 ### Linux binary
