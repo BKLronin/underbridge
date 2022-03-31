@@ -2,40 +2,62 @@
 ## Multitrack exporter
 ---
 
-## Despription
+## Description
 
-- Exports Patterns and projects individual Audio Tracks to seperate folders for use in your DAW
-- Python cross plattform with single file binary for x86 linux
+- Exports patterns and projects individual audio tracks to seperate folders for use in your DAW.
+- Python cross plattform with single file binary for x86 linux.
 
-## Installation 
-### Ubuntu 20.10 LTS (If the binary in /dist doesn't work)
+## Using Packaged single file Binarys _(The easy way)_
 
-`sudo apt  install portaudio19-dev`
-`sudo apt install python3-tk`
-`pip install python-rtmidi`
-`pip install pyaudio`
-
-### Mac Install
-
-`brew install portaudio`
-`brew install python-tk`
-`pip install python-rtmidi`
-`pip install pyaudio`
-`pip install mido`
-
-`python3 underbridge.py` to start
-
-### Linux binary
-
+- Executables reside in the folder `/dist/`
+- on Windows
+    `underbridge.exe`
+- On Linux:
 ``./underbridge``
 
-Underbridge_alt was packaged on a different system. Might help if you run into problems.
+
+Underbridge_alt was packaged on a different system. Might help if you run into problems. (Outdated)
+
+## Installation _(Less easy way)_
+
+### Windows
+
+- Install Python 3.9 if not already, 3.10 seems to cause problems.
+- install portaudio_dev : `apt install portaudio19-dev`
+- install mido :  `pip install mido`
+- install rt-midi: `pip isntall rt-midi`
+- install pipwin: `pip install pipwin`
+- install pyaudio `pipwin install pyaudio`
+
+**Activate OP-Z device input in sound settings of windows and make it default**
+
+- run `python underbridge.py`
+
+### Mac Install - ( tested on Mac OS Monterey 12.3 )
+
+install portaudio: `brew install portaudio`
+install mido: `pip install mido`
+install tk: `brew install python-tk`
+install rt-midi: `pip install python-rtmidi`
+install pyaudio: `pip install pyaudio`
+
+**Set OP-Z device as input in sound of system preferences**
+
+open terminal and type: `python3 underbridge.py` to start
+
+### Ubuntu 20.10 LTS
+
+ - `sudo apt  install portaudio19-dev`
+- `sudo apt install python3-tk`
+- `pip install python-rtmidi`
+- `pip install pyaudio`
+
+`python3 underbridge.py` to start
 
 ## Steps
 
 - connect OP-Z via USB
-- in /dist/ directory run ``./underbridge``
-- Alternatively python3 underbridge.py in root directory. Make sure you have installed dependencies before..
+- Run underbridge
 
 ### Single Pattern Mode
 
@@ -53,7 +75,7 @@ Underbridge_alt was packaged on a different system. Might help if you run into p
 - Select Porject and first Pattern you want to export on OP-Z.
 - Enter name for the project. This is used for the folder structure
 - Get BPM from led code or Smartphone app.
-- Enter BPM 
+- Enter BPM
 - Enter longest Bar of you track (1-4)
 - Enter the Nr. of Patterns your song consists of.
 - Optionally enter additional seconds at the end of the recording to capture reverb tails etc.
@@ -61,7 +83,5 @@ Underbridge_alt was packaged on a different system. Might help if you run into p
 - Select directory you want to record the waves to
 - Click record and wait until finished.
 
-
-
-
-
+### Troubleshooting
+- When the recorded audio contains buzzing or other artifacts try disabling the USB charging with "display" and "bottom right key" to disable.

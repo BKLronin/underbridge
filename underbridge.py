@@ -1,7 +1,6 @@
 # Underbridge OP-Z multichannel exporter
 # Copyright 2022 Thomas Herrmann Email: herrmann@raise-uav.com
 
-
 import mido
 import pyaudio
 import wave
@@ -11,6 +10,9 @@ import time
 import threading
 import os
 
+device_list = []
+op_device = []
+audio_device = []
 loop_time = 0
 inport = 0
 outport = 0
@@ -25,11 +27,39 @@ cancel = 0
 
 
 def getMIDIDevice():   
-    pass
+    global device_list
+    global op_device
+    device_list = mido.get_output_names()
+    print (device_list)
+    try: 
+        op_device = list(filter(lambda x: 'OP-Z' in x, device_list))        
+        op_device = op_device[0]
+        print (op_device)
+        displaymsg.set("OP-Z found")
+    except:
+        displaymsg.set("Can´t find OP-Z : MIDI Error.")
 
+def getAudioDevice():
+    global audio_device
+    p = pyaudio.PyAudio()
+    try:
+        info = p.get_host_api_info_by_index(0)
+        numdevices = info.get('deviceCount')
+        for i in range(0, numdevices):
+            if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+                print("Input Device id ", i, " - ", p.get_device_info_by_host_api_device_index(0, i).get('name'))
+        for i in range(0, numdevices):
+            #audio_device = p.get_device_info_by_host_api_device_index(0, i).get('name')
+            if "OP-Z" in p.get_device_info_by_host_api_device_index(0, i).get('name') and (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+                audio_device = i
+            
+        print ("Detected OP-Z audio at Index:",audio_device, p.get_device_info_by_host_api_device_index(0, audio_device).get('name'))
+    except:
+        displaymsg.set("OP-Z Audio Device not found.")
 
 def getBPM():
-    inport= mido.open_input('OP-Z:OP-Z MIDI 1 20:0')
+    global op_device
+    inport= mido.open_input(op_device)
     msg = inport.poll()
     #print(msg)
 
@@ -55,8 +85,9 @@ def setParam():
 
 def openMidi():    
     global outport  
-    outport= mido.open_output('OP-Z:OP-Z MIDI 1 20:0')    
-    displaymsg.set("OP-Z MIDI not connected :(")
+    global op_device
+    outport= mido.open_output(op_device)    
+    #displaymsg.set("OP-Z MIDI not connected :(")
     print(outport) 
 
 def setProject(projnr):
@@ -102,8 +133,10 @@ def nextPattern():
 def nextSong():
     pass
 
-def closeMidi():
-    pass
+def closeMidi():    
+    global outport
+    outport.close()    
+    displaymsg.set("MIDI closed")     
 
 def setPath():
     global path
@@ -139,26 +172,29 @@ def start_Rec():
     global j
     global pro
     global pattern_nr
-    CHUNK = 1024
+    global audio_device
+
+    CHUNK = 128
     FORMAT = pyaudio.paInt16
     CHANNELS = 2
-    RATE = 44100
+    RATE = 48000
     RECORD_SECONDS = loop_time
     WAVE_OUTPUT_FILENAME =  name_input.get()+ "_" + "track" + str(j+1) + ".wav"
     
-    p = pyaudio.PyAudio()
-    start_MIDI()
+    p = pyaudio.PyAudio()   
     stream = p.open(format=FORMAT,
                     channels=CHANNELS,
                     rate=RATE,
                     input=True,
+                    input_device_index= audio_device,
                     frames_per_buffer=CHUNK
+                    
                     )
 
     #print("* recording")
     
     frames = []
-
+    start_MIDI()
     for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
         data = stream.read(CHUNK)
         frames.append(data)
@@ -184,12 +220,19 @@ def start_Rec():
     displaymsg.set("End of Recording")
 
 def sequenceMaster():
+    
     global cancel
     global pattern_nr
     cancel = 0
     #print("test")
+
+    getMIDIDevice()
+    time.sleep(1)
+    getAudioDevice()
+
     displaymsg.set("Sequence started")
-    try:
+
+    try:        
         openMidi()
             
         if mode_select.get() == 2:
@@ -201,11 +244,13 @@ def sequenceMaster():
                 break
             #print("sequence started",i)       
             muteAll()
+            time.sleep(0.1)
             setSolo(i)
             #starting Midi during wave record for timing        
             start_Rec()       
             #print(i)
             stop_MIDI()
+            time.sleep(1)
             unmuteAll()
             mode = mode_select.get()                
             
@@ -218,13 +263,15 @@ def sequenceMaster():
                     pattern_nr = 0
                 sequenceMaster()
     except:
-        displaymsg.set("OP-Z connection Problem :(")
+        displaymsg.set("OP-Z Sequence error try restarting the OP-Z or press CANCEL Button")
 
 def cancelRec():
     global cancel
+    global outport
     global j
     j = 0
     cancel = 1  
+    closeMidi()
 
 #GUI Main
 buttonsize_x = 7
