@@ -25,7 +25,8 @@ addsec = 0
 projectpath = 0
 cancel = 0
 RATE = 0
-
+mute_list =[0] * 14 #Midi mute selection of all 14 necessary channels
+#modifier_dict = {"mod1": modifier1_va}
 
 def getMIDIDevice():   
     global device_list
@@ -108,11 +109,24 @@ def setProject(projnr):
     outport.send(msg)
 
 def muteAll():
+    global mute_list
     global outport
-    for i in range (0,15):
-        msg = mido.Message('control_change',control= 53, channel= i, value=1)
+    checkbutton_name = 0    
+    print(mute_list)
+    
+    for j in range (0,7):
+        mute_list[j] = 1     
+    
+    for i in range (1,7):
+        checkbutton_name = 'modifier{}_value'.format(i)   #'k{}'.format(i)
+        #print(checkbutton_name)
+        mute_list[i+7] = eval(checkbutton_name).get()        
+
+    for k in range (0,13):
+        msg = mido.Message('control_change',control= 53, channel= k, value= mute_list[k])
         outport.send(msg)
-        
+    print("Muted Channels",mute_list)
+
 def setSolo(chn):
     global outport
     msg = mido.Message('control_change',control= 53, channel= chn, value=0)
@@ -300,13 +314,23 @@ upperframe= LabelFrame(root, text= "Parameter",padx= 10, pady =2, fg = 'white')
 upperframe.grid(row = 0, column = 0, padx =2, pady =2,)
 
 lowerframe= Frame(root,padx= 10, pady =5)
-lowerframe.grid(row = 1, column = 0, padx =2, pady =2)
+lowerframe.grid(row = 2, column = 0, padx =2, pady =2)
+
+modifiers = LabelFrame(root, text= "Exclude Modifiers",padx= 10, pady =2, fg = 'white')
+modifiers.grid(row = 1, column = 0, padx =2, pady =2)
 
 footer= Frame(root,padx= 15, pady =2)
-footer. grid(row = 2, column = 0, padx =2, pady =2)
+footer. grid(row = 3, column = 0, padx =2, pady =2)
 
 mode_select = IntVar()
 displaymsg = StringVar()
+modifier1_value = IntVar()
+modifier2_value = IntVar()
+modifier3_value = IntVar()
+modifier4_value = IntVar()
+modifier5_value = IntVar()
+modifier6_value = IntVar()
+
 #root.geometry('550x150+0+0')
 
 Get_BPM = Button(upperframe, text="Get BPM",width = buttonsize_x, height = buttonsize_y, fg = 'lightgrey', command = lambda:getBPM())
@@ -337,6 +361,24 @@ name_input = Entry(upperframe, width =10, text="Name",bg = 'lightgrey', relief= 
 name_input.insert(0, "Name")
 #name_text = Label(upperframe,text="Prj Name", width = 8, height = 1)
 
+modifier1 = Checkbutton(modifiers, text="Send 1", variable=modifier1_value)
+modifier1.grid(row = 0, column = 0, padx =5, pady =2)
+
+modifier2 = Checkbutton(modifiers,text="Send 2", variable=modifier2_value)
+modifier2.grid(row = 0, column = 1, padx =5, pady =2)
+
+modifier3 = Checkbutton(modifiers,text="Tape",variable=modifier3_value )
+modifier3.grid(row = 0, column = 2, padx =5, pady =2)
+
+modifier4 = Checkbutton(modifiers,text="Master", variable= modifier4_value)
+modifier4.grid(row = 0, column = 3, padx =5, pady =2)
+
+modifier5 = Checkbutton(modifiers,text="Perform", variable= modifier5_value)
+modifier5.grid(row = 0, column = 4, padx =5, pady =2)
+
+modifier6 = Checkbutton(modifiers,text="Module", variable= modifier6_value)
+modifier6.grid(row = 0, column = 5, padx =5, pady =2)
+
 set_param = Button(lowerframe, text="Set Prmtr",width = buttonsize_x, height = buttonsize_y, fg = 'white',bg= '#0095FF', command = lambda:setParam())
 set_path = Button(lowerframe, text="Directory",width = buttonsize_x, height = buttonsize_y,fg = 'white',bg= '#0095FF', command = lambda:setPath())
 start_recording = Button(lowerframe, text="RECORD",width = buttonsize_x, height = buttonsize_y,fg = 'white', bg = '#FF2200', command = lambda:threading.Thread(target = sequenceMaster).start())
@@ -349,8 +391,6 @@ cancel.grid(row = 0, column = 6, padx =2, pady =2)
 
 donate = Label(footer, text= "donate <3 @ https://link.raise-uav.com", height = 1)
 donate.grid(row = 3, column = 4, padx =2, pady =10, columnspan=2)
-
-
 #Get_BPM.grid(row = 1, column = 0, padx =2, pady =2)
 
 #ALL.grid()
