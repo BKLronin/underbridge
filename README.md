@@ -15,7 +15,7 @@
 - On Linux:
     ``./underbridge``
 - on Mac
-Open termianl and change directpory to where the underbridge_mac file is and execute:
+Open terminal and change directory to where the underbridge_mac file is located and execute:
     ``chmod 755 underbridge_mac``
     ``./underbridge_mac`` or ``open underbridge_mac``
 
