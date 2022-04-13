@@ -5,16 +5,19 @@
 ## Description
 
 - Exports patterns and projects individual audio tracks to seperate folders for use in your DAW.
-- Python cross plattform with single file binary for x86 linux.
+- Python cross plattform with single file binary for x86 linux Windows and Mac.
 
 ## Using Packaged single file Binarys _(The easy way)_
 
-- Executables reside in the folder `/dist/`
+- Executables reside in the folder `/dist/` or in the release tab.
 - on Windows
-    `underbridge.exe`
+    ``underbridge.exe``
 - On Linux:
-``./underbridge``
-
+    ``./underbridge``
+- on Mac
+Open termianl and change directpory to where the underbridge_mac file is and execute:
+    ``chmod 755 underbridge_mac``
+    ``./underbridge_mac`` or ``open underbridge_mac``
 
 Underbridge_alt was packaged on a different system. Might help if you run into problems. (Outdated)
 
@@ -23,13 +26,13 @@ Underbridge_alt was packaged on a different system. Might help if you run into p
 ### Windows
 
 - Install Python 3.9 if not already, 3.10 seems to cause problems.
-- install portaudio_dev : `apt install portaudio19-dev`
 - install mido :  `pip install mido`
 - install rt-midi: `pip isntall rt-midi`
 - install pipwin: `pip install pipwin`
 - install pyaudio `pipwin install pyaudio`
 
-**Activate OP-Z device input in sound settings of windows and make it default**
+**- Activate OP-Z device input in sound settings of windows and make it default (Should detect automatically just to be sure. **
+**- Close all other Applications that might use any audio source like your Browser etc **
 
 - run `python underbridge.py`
 
@@ -47,7 +50,7 @@ open terminal and type: `python3 underbridge.py` to start
 
 ### Ubuntu 20.10 LTS
 
- - `sudo apt  install portaudio19-dev`
+- `sudo apt  install portaudio19-dev`
 - `sudo apt install python3-tk`
 - `pip install python-rtmidi`
 - `pip install pyaudio`
@@ -85,3 +88,4 @@ open terminal and type: `python3 underbridge.py` to start
 
 ### Troubleshooting
 - When the recorded audio contains buzzing or other artifacts try disabling the USB charging with "display" and "bottom right key" to disable.
+- If the playback of the OP-Z starts correctly but no tracks are muted check that MIDI IN in the OP-Z app or via combo is enabled.
