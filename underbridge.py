@@ -350,6 +350,8 @@ class Midirecorder:
                 self.stop_MIDI()
                 time.sleep(1)
                 self.unmuteAll()
+                time.sleep(1)
+                self.closeMidi()
                 mode = self.mode_select.get()                
                 
                 if i == 7 and mode == 2: 
