@@ -341,8 +341,7 @@ class Midirecorder:
                 if self.cancel == 1 or self.pattern_nr == pattern_limit:
                     break
                 #print("sequence started",i)       
-                self.muteAll()
-                
+                self.muteAll()                
                 time.sleep(0.1)
                 self.setSolo(i)
                 #starting Midi during wave record for timing                     
@@ -350,8 +349,7 @@ class Midirecorder:
                 self.stop_MIDI()
                 time.sleep(1)
                 self.unmuteAll()
-                time.sleep(1)
-                self.closeMidi()
+                time.sleep(1)                
                 mode = self.mode_select.get()                
                 
                 if i == 7 and mode == 2: 
