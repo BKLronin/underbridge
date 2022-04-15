@@ -133,7 +133,7 @@ class Midirecorder:
         try: 
             self.op_device = list(filter(lambda x: 'OP-Z' in x, device_list))        
             self.op_device = self.op_device[0]
-            print (self.op_device)
+            #print (self.op_device)
             self.displaymsg.set("OP-Z found")
         except:
             self.displaymsg.set("Can´t find OP-Z : MIDI Error.")
@@ -196,7 +196,7 @@ class Midirecorder:
         #global op_device
         self.outport= mido.open_output(self.op_device)    
         #displaymsg.set("OP-Z MIDI not connected :(")
-        print(self.outport) 
+        #print(self.outport) 
 
     def setProject(self,projnr):
         msg= mido.Message('program_change',song= self.projnr, program = 1)
@@ -204,19 +204,19 @@ class Midirecorder:
 
     def muteAll(self):        
         checkbutton_name = 0    
-        print(self.mute_list)
+        #print(self.mute_list)
         
-        for j in range (0,7):
+        for j in range (0,8):
             self.mute_list[j] = 1     
         
-        for i in range (1,6):
+        for i in range (1,7):
             checkbutton_name = 'self.modifier{}_value'.format(i)     #checkbutton 1- 6         
             self.mute_list[i+7] = eval(checkbutton_name).get()       #9th position in mute list  
 
-        for k in range (0,13):
+        for k in range (0,14):
             msg = mido.Message('control_change',control= 53, channel= k, value= self.mute_list[k])
             self.outport.send(msg)
-        print("Muted Channels",self.mute_list)
+        #print("Muted Channels",self.mute_list)
 
     def setSolo(self,chn):        
         msg = mido.Message('control_change',control= 53, channel= chn, value=0)        
@@ -226,7 +226,7 @@ class Midirecorder:
         msg = mido.Message('start')
         self.outport.send(msg)
         self.displaymsg.set("Playback started")
-        print("midi")
+        #print("midi")
 
     def stop_MIDI(self):        
         msg = mido.Message('stop')
@@ -278,16 +278,16 @@ class Midirecorder:
         #print(projectpath)
 
     def start_Rec(self):
-        print("record")
+        #print("record")
         self.displaymsg.set("Recording...")
         CHUNK = 128
         FORMAT = pyaudio.paInt16
         CHANNELS = 2
         
         RECORD_SECONDS= self.loop_time
-        print("record")
+        #print("record")
         WAVE_OUTPUT_FILENAME =  self.name_input.get() + "_" + "track" + str(self.j+1) + ".wav"       
-        print(WAVE_OUTPUT_FILENAME)
+        #print(WAVE_OUTPUT_FILENAME)
         p = pyaudio.PyAudio()   
         stream = p.open(format=FORMAT,
                         channels=CHANNELS,
@@ -297,7 +297,7 @@ class Midirecorder:
                         frames_per_buffer=CHUNK                        
                         )
 
-        print("* recording")
+        #print("* recording")
         
         frames = []
         self.start_MIDI()
