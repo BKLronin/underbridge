@@ -67,8 +67,8 @@ class Midirecorder:
         Pattern.select()
 
         self.bar_input = Scale(upperframe, from_ = 1, to = 9, orient = HORIZONTAL, label="Nr. Bars", sliderlength= 10, length= 75, fg = 'white')
-        self.patterns_input = Scale(upperframe, from_ = 1, to = 10, orient = HORIZONTAL, label="Patterns",sliderlength= 10, length= 75, fg = 'white')
-        self.patterns_input.set(value=10)
+        self.patterns_input = Scale(upperframe, from_ = 1, to = 16, orient = HORIZONTAL, label="Patterns",sliderlength= 10, length= 75, fg = 'white')
+        self.patterns_input.set(value=16)
         self.bpm_input = Entry(upperframe, width =10, text="BPM",bg= 'lightgrey', relief= FLAT)        
         self.bpm_input.insert(0, "BPM")
         self.add_sec = Scale(upperframe, from_ = 0, to = 10, orient = HORIZONTAL, label="extra Sec", sliderlength= 10, length= 75, fg = 'white')
@@ -338,7 +338,7 @@ class Midirecorder:
 
             for i in range (0,8): 
                 pattern_limit = self.patterns_input.get() 
-                if self.cancel == 1 or self.pattern_nr == pattern_limit:
+                if self.cancel == 1 or self.pattern_nr  == pattern_limit:
                     break
                 #print("sequence started",i)       
                 self.muteAll()                
@@ -357,7 +357,7 @@ class Midirecorder:
                     time.sleep(5)
                     self.nextPattern()
                     self.pattern_nr += 1
-                    if self.pattern_nr == 9 :
+                    if self.pattern_nr == 15 :
                         self.pattern_nr = 0
                     self.sequenceMaster()
         except:
