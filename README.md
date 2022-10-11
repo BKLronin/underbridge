@@ -44,6 +44,8 @@ install tk: `brew install python-tk`
 install rt-midi: `pip install python-rtmidi`
 install pyaudio: `pip install pyaudio`
 
+If the last step fails with the error `ERROR: Could not build wheels for pyaudio, which is required to install pyproject.toml-based projects`, and you are on a M1 Pro chipset, follow [these instructions](https://i.stack.imgur.com/Xn0bm.png).
+
 **Set OP-Z device as input in sound of system preferences**
 
 open terminal and type: `python3 underbridge.py` to start
