@@ -18,6 +18,9 @@
 Open terminal and change directory to where the underbridge_mac file is located and execute:
     ``chmod 755 underbridge_mac``
     ``./underbridge_mac`` or ``open underbridge_mac``
+Tip: If the app doesnt start try:    
+    ``xattr -d com.apple.quarantine underbridge.app``
+To unblock the app.
 
 Underbridge_alt was packaged on a different system. Might help if you run into problems. (Outdated)
 
