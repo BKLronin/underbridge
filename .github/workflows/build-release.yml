@@ -1,0 +1,124 @@
+name: Build Release Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'  # Run workflow on version tags, e.g. v1.0.0
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install nuitka
+          
+      - name: Install PortAudio
+        run: |
+          brew install portaudio
+
+      - name: Build with Nuitka
+        run: |
+          python -m nuitka \
+            --standalone \
+            --follow-imports \
+            --include-package=mido \
+            --include-package=pyaudio \
+            --include-package=nicegui \
+            --macos-create-app-bundle \
+            --static-libpython=no \
+            --output-dir=dist/macos \
+            underbridge.py
+
+      - name: Create DMG
+        run: |
+          # Create a folder for the app
+          mkdir -p dmg_contents
+          # Copy the app bundle to the folder
+          cp -r dist/macos/underbridge.app dmg_contents/
+          # Create a symlink to Applications folder
+          ln -s /Applications dmg_contents/
+          # Create the DMG
+          hdiutil create -volname "Underbridge" -srcfolder dmg_contents -ov -format UDZO Underbridge-macOS.dmg
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-build
+          path: Underbridge-macOS.dmg
+          retention-days: 1
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install nuitka
+
+      - name: Build with Nuitka
+        run: |
+          python -m nuitka `
+            --standalone `
+            --follow-imports `
+            --include-package=mido `
+            --include-package=pyaudio `
+            --include-package=nicegui `
+            --windows-icon-from-ico=logo.ico `
+            --windows-disable-console `
+            --static-libpython=no `
+            --output-dir=dist/windows `
+            underbridge.py
+
+      - name: Create ZIP archive
+        run: |
+          cd dist/windows
+          Compress-Archive -Path underbridge.dist -DestinationPath ../../Underbridge-Windows.zip
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-build
+          path: Underbridge-Windows.zip
+          retention-days: 1
+
+  create-release:
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            macos-build/Underbridge-macOS.dmg
+            windows-build/Underbridge-Windows.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
