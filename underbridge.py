@@ -1,227 +1,471 @@
-import sys
-import os
-import time
-import threading
-import wave
-
-import mido
-import pyaudio
-
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QGridLayout,
-    QGroupBox, QLabel, QLineEdit, QPushButton, QRadioButton, QSpinBox,
-    QCheckBox, QFileDialog
+    QApplication, QWidget, QLabel, QPushButton,
+    QGroupBox, QHBoxLayout, QVBoxLayout, QGridLayout,
+    QLineEdit, QRadioButton, QSlider, QCheckBox,
+    QFrame, QFileDialog
 )
 from PySide6.QtCore import Qt
+import mido
+import pyaudio
+import wave
+import threading
+import time
+import os
+
+from PySide6.QtCore import QTimer
 
 
-class Midirecorder(QMainWindow):
+
+class Midirecorder(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("underbridge")
-        self.setFixedSize(700, 400)
-
-        # Styling
+        self.loop_time = None
+        self.outport = None
+        self.setWindowTitle('underbridge')
+        self.setFixedSize(600, 500)  # Similar to original window size
         self.setStyleSheet("""
-            QPushButton {
-                background-color: #444;
-                color: white;
-                border: 1px solid #666;
-                border-radius: 8px;
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-            QPushButton:hover {
-                background-color: #555;
-            }
-            QPushButton:pressed {
-                background-color: #333;
-            }
+        /* === Base Widget Styles === */
+        QWidget {
+            background-color: #1e1e1e;
+            color: #f8f8f2;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 14px;
+        }
 
-            QRadioButton {
-                background-color: #2f2f2f;
-                color: white;
-                border: 1px solid #666;
-                border-radius: 8px;
-                padding: 4px 10px;
-            }
-            QRadioButton::indicator { width: 0px; height: 0px; }
-            QRadioButton:checked {
-                background-color: #0095FF;
-                color: black;
-            }
+        /* === Group Boxes === */
+        QGroupBox {
+            background-color: transparent;
+            border: 1px solid #ff9966;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
 
-            QCheckBox { color: white; }
-            QLineEdit {
-                background-color: #999;
-                color: black;
-                border: 1px solid #666;
-                border-radius: 4px;
-                padding: 2px 6px;
-            }
-            QLabel { color: white; }
-            QGroupBox {
-                border: 1px solid #666;
-                border-radius: 6px;
-                margin-top: 10px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                subcontrol-position: top center;
-                padding: 0 3px;
-                color: white;
-            }
-            QSpinBox {
-                background-color: #999;
-                border: 1px solid #666;
-                border-radius: 4px;
-                padding: 2px;
-                color: black;
-            }
-            QLabel#footer {
-                color: #aaa;
-                font-size: 10px;
-            }
-            QLabel#display {
-                background: #aaa;
-                color: black;
-                padding: 4px;
-                border-radius: 4px;
-            }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 10px;
+            padding: 0 3px;
+            color: #ffcc99;
+            font-weight: bold;
+        }
+
+        /* === Labels === */
+        QLabel {
+            color: #f8f8f2;
+            background: transparent;
+            font-size: 14px;
+        }
+
+        /* === Line Edit === */
+        QLineEdit {
+            background-color: #1e1e1e;
+            border: 1px solid #ff9966;
+            border-radius: 5px;
+            padding: 6px 10px;
+            color: #f8f8f2;
+            font-size: 14px;
+        }
+
+        /* === Buttons === */
+        QPushButton {
+            background-color: #ff9966;
+            color: #1e1e1e;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        QPushButton:hover {
+            background-color: #ffaa77;
+        }
+
+        QPushButton:pressed {
+            background-color: #ff8844;
+        }
+
+        /* === Sliders === */
+        QSlider::groove:horizontal {
+            border: 1px solid #444;
+            height: 8px;
+            background: #3c3c3c;
+            margin: 2px 0;
+            border-radius: 4px;
+        }
+
+        QSlider::handle:horizontal {
+            background: #ffaa77;
+            border: 1px solid #ff9966;
+            width: 16px;
+            margin: -5px 0;
+            border-radius: 8px;
+        }
+
+        /* === Checkboxes === */
+        QCheckBox {
+            spacing: 5px;
+            font-size: 14px;
+        }
+
+        QCheckBox::indicator {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #ff9966;
+            border-radius: 3px;
+            background: #1e1e1e;
+        }
+
+        QCheckBox::indicator:checked {
+            background-color: #ffaa77;
+            border: 1px solid #ffaa77;
+        }
+
+        /* === Radio Buttons === */
+        QRadioButton {
+            font-size: 14px;
+        }
+
+        QRadioButton::indicator {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #ff9966;
+            border-radius: 8px;
+            background: #1e1e1e;
+        }
+
+        QRadioButton::indicator:checked {
+            background-color: #ffaa77;
+            border: 1px solid #ffaa77;
+        }
+
+        /* === Links (footer) === */
+        QLabel:hover {
+            color: #ffe0b3;
+        }
+
+        a {
+            color: #ffcc99;
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: #ffe0b3;
+            text-decoration: underline;
+        }
+
+        /* === Tooltips === */
+        QToolTip {
+            background-color: #ffaa77;
+            color: #1e1e1e;
+            border: none;
+            padding: 6px;
+            border-radius: 5px;
+        }
+
+        /* === Frame/Footer === */
+        QFrame {
+            background-color: transparent;
+        }
         """)
 
-        # Main layout
-        main_widget = QWidget()
-        main_layout = QVBoxLayout(main_widget)
+        self.j = 0
+        self.pattern_nr = 0
+        self.cancel = False
 
-        # Parameter group
-        param_group = QGroupBox("Parameter")
-        param_layout = QGridLayout(param_group)
-        self.name_input = QLineEdit("Name")
-        self.bpm_input = QLineEdit("BPM")
-        self.bar_input = QSpinBox()
-        self.bar_input.setRange(1, 9)
-        self.patterns_input = QSpinBox()
+        self.mute_list = [0] * 14  # MIDI mute selection of all 14 necessary channels
+        self.RATE = 0
+
+        # Layout setup
+        layout = QGridLayout()
+        layout.alignment().AlignCenter
+        self.setLayout(layout)
+
+
+        self.create_upperframe(layout)
+        self.create_modifiers_frame(layout)
+        self.create_lowerframe(layout)
+        self.create_footer(layout)
+
+    def safe_set_text(self, text):
+        QTimer.singleShot(0, lambda: self.safe_set_text(text))
+
+    def create_upperframe(self, layout):
+        upperframe = QGroupBox("Parameter")
+        upper_layout = QGridLayout()
+        upperframe.setLayout(upper_layout)
+
+        self.name_input = QLineEdit()
+        self.name_input.setPlaceholderText("Name")
+
+        self.bpm_input = QLineEdit()
+        self.bpm_input.setPlaceholderText("BPM")
+
+        self.bar_input = QSlider(Qt.Horizontal)
+        self.bar_input.setRange(1, 10)
+        self.bar_input.setValue(1)
+
+        self.bar_nr = QLabel("1")
+
+        self.patterns_input = QSlider(Qt.Horizontal)
         self.patterns_input.setRange(1, 16)
-        self.patterns_input.setValue(16)
-        self.add_sec = QSpinBox()
+        self.patterns_input.setValue(1)  # Default value
+
+        self.ptr_nr = QLabel("1")
+
+        self.add_sec = QSlider(Qt.Horizontal)
         self.add_sec.setRange(0, 10)
 
-        param_layout.addWidget(self.name_input, 0, 0)
-        param_layout.addWidget(self.bpm_input, 0, 1)
-        param_layout.addWidget(QLabel("Nr. Bars"), 0, 2)
-        param_layout.addWidget(self.bar_input, 0, 3)
-        param_layout.addWidget(QLabel("Patterns"), 0, 4)
-        param_layout.addWidget(self.patterns_input, 0, 5)
-        param_layout.addWidget(QLabel("Extra Sec"), 0, 6)
-        param_layout.addWidget(self.add_sec, 0, 7)
+        self.extra_nr = QLabel("1")
 
-        # Mode selection
-        self.mode_select_project = QRadioButton("Project")
-        self.mode_select_pattern = QRadioButton("Pattern")
-        self.mode_select_pattern.setChecked(True)
+        upper_layout.addWidget(QLabel("Name"), 0, 0)
+        upper_layout.addWidget(self.name_input, 0, 1)
 
-        # Modifiers group
-        modifier_group = QGroupBox("Exclude Modifiers")
-        modifier_layout = QGridLayout(modifier_group)
-        self.modifiers = []
-        for i, name in enumerate(["Send 1", "Send 2", "Tape", "Master", "Perform", "Module"]):
-            cb = QCheckBox(name)
-            modifier_layout.addWidget(cb, 0, i)
-            self.modifiers.append(cb)
+        upper_layout.addWidget(QLabel("BPM"), 0, 3)
+        upper_layout.addWidget(self.bpm_input, 0, 4)
 
-        # Control buttons and display
-        controls_layout = QGridLayout()
-        self.set_param_button = QPushButton("Set Prmtr")
-        self.set_path_button = QPushButton("Directory")
-        self.record_button = QPushButton("RECORD")
-        self.cancel_button = QPushButton("CANCEL")
-        self.display_label = QLabel("Enter Parameter, then press Set Param...")
-        self.display_label.setObjectName("display")
+        upper_layout.addWidget(QLabel("Nr. Bars"), 1, 0)
+        upper_layout.addWidget(self.bar_input, 1, 1)
+        upper_layout.addWidget(self.bar_nr, 1,2)
 
-        self.set_param_button.clicked.connect(self.setParam)
-        self.set_path_button.clicked.connect(self.setPath)
-        self.cancel_button.clicked.connect(self.cancelRec)
-        self.record_button.clicked.connect(lambda: threading.Thread(target=self.sequenceMaster).start())
+        upper_layout.addWidget(QLabel("Patterns"), 1, 3)
+        upper_layout.addWidget(self.patterns_input, 1, 4)
+        upper_layout.addWidget(self.ptr_nr, 1, 5)
 
-        controls_layout.addWidget(self.mode_select_project, 0, 0)
-        controls_layout.addWidget(self.mode_select_pattern, 0, 1)
-        controls_layout.addWidget(self.set_param_button, 0, 2)
-        controls_layout.addWidget(self.set_path_button, 0, 3)
-        controls_layout.addWidget(self.record_button, 0, 4)
-        controls_layout.addWidget(self.cancel_button, 0, 5)
-        controls_layout.addWidget(self.display_label, 1, 0, 1, 6)
+        upper_layout.addWidget(QLabel("extra Sec"), 3, 0)
+        upper_layout.addWidget(self.add_sec, 3, 1)
+        upper_layout.addWidget(self.extra_nr, 3, 2)
+        
+        self.bar_input.valueChanged.connect(self.update_bar)
+        self.patterns_input.valueChanged.connect(self.update_ptrn)
+        self.add_sec.valueChanged.connect(self.update_extra)
+        
+        layout.addWidget(upperframe, 0, 0)
 
-        # Footer
-        footer_label = QLabel("donate <3 @ https://link.raise-uav.com")
-        footer_label.setObjectName("footer")
+    def update_bar(self, value):
+        self.bar_nr.setText(str(value))
 
-        # Layout
-        main_layout.addWidget(param_group)
-        main_layout.addWidget(modifier_group)
-        main_layout.addLayout(controls_layout)
-        main_layout.addWidget(footer_label)
-        self.setCentralWidget(main_widget)
+    def update_ptrn(self, value):
+        self.ptr_nr.setText(str(value))
 
-        # Internal state
-        self.op_device = []
-        self.audio_device = []
-        self.loop_time = 0
-        self.outport = None
-        self.pattern_nr = 0
-        self.j = 0
-        self.projectpath = ""
-        self.cancel = 0
-        self.RATE = 0
-        self.mute_list = [0] * 14
+    def update_extra(self, value):
+        self.extra_nr.setText(str(value))
+
+    def create_modifiers_frame(self, layout):
+        modifiers = QGroupBox("Exclude Modifiers")
+        mod_layout = QGridLayout()
+        modifiers.setLayout(mod_layout)
+
+        self.modifier_values = [QCheckBox(f"Send {i+1}") for i in range(6)]
+        self.modifier_values[0].setText("Send 1")
+        self.modifier_values[1].setText("Send 2")
+        self.modifier_values[2].setText("Tape")
+        self.modifier_values[3].setText("Master")
+        self.modifier_values[4].setText("Perform")
+        self.modifier_values[5].setText("Module")
+
+        for idx, cb in enumerate(self.modifier_values):
+            mod_layout.addWidget(cb, 0, idx)
+
+        layout.addWidget(modifiers, 1,0)
+
+    def create_lowerframe(self, layout):
+        lowerframe = QGroupBox("Execute")
+        lower_layout = QGridLayout()
+        lowerframe.setLayout(lower_layout)
+        lowerframe.alignment().AlignCenter
+        #,lower_layout.setSpacing(15)
+
+        self.mode_select = 3
+        self.Song = QRadioButton("Project")
+        self.Pattern = QRadioButton("Pattern")
+        self.Pattern.setChecked(True)
+
+        self.Song.toggled.connect(lambda: setattr(self, "mode_select", 2) if self.Song.isChecked() else None)
+        self.Pattern.toggled.connect(lambda: setattr(self, "mode_select", 3) if self.Pattern.isChecked() else None)
+
+        lower_layout.addWidget(self.Song, 0, 0)
+        lower_layout.addWidget(self.Pattern, 0, 1)
+
+        set_param = QPushButton("Set Prmtr")
+        set_path = QPushButton("Directory")
+        start_recording = QPushButton("RECORD")
+
+
+        lower_layout.addWidget(set_param, 0, 2)
+        lower_layout.addWidget(set_path, 0, 3)
+        lower_layout.addWidget(start_recording, 0, 4)
+
+        set_param.clicked.connect(self.setParam)
+        set_path.clicked.connect(self.setPath)
+        start_recording.clicked.connect(self.startRecording)
+
+        layout.addWidget(lowerframe, 2, 0)
+
+    def create_footer(self, layout):
+        footer = QWidget()
+        foot_layout = QVBoxLayout()
+        footer.setLayout(foot_layout)
+
+        tutorial_label = QLabel("Enter Parameter, then press set Param, choose directory and start recording")
+        #donate_label = QLabel("<a href='https://link.raise-uav.com'>donate <3 @ https://link.raise-uav.com</a>")
+        #donate_label.setOpenExternalLinks(True)
+
+        self.displaymsg = QLabel()
+
+        foot_layout.addWidget(tutorial_label)
+        foot_layout.addWidget(self.displaymsg)
+        #foot_layout.addWidget(donate_label)
+        layout.addWidget(footer, 3, 0)
 
     def getMIDIDevice(self):
         try:
             device_list = mido.get_output_names()
-            self.op_device = [d for d in device_list if 'OP-Z' in d][0]
-            self.display_label.setText("OP-Z found")
+            print("Available MIDI Devices:", device_list)
+            self.op_device = next((x for x in device_list if "OP-Z" in x), None)
+            if self.op_device:
+                self.safe_set_text("OP-Z MIDI found")
+            else:
+                self.safe_set_text("Can't find OP-Z : MIDI Error.")
         except Exception as e:
-            self.display_label.setText(f"MIDI Error: {e}")
+            print("MIDI Error:", e)
+            self.safe_set_text("Error accessing MIDI devices.")
 
     def getAudioDevice(self):
+        p = pyaudio.PyAudio()
+        self.audio_device = None
         try:
-            p = pyaudio.PyAudio()
-            info = p.get_host_api_info_by_index(0)
-            for i in range(info['deviceCount']):
-                dev = p.get_device_info_by_host_api_device_index(0, i)
-                if 'OP-Z' in dev['name'] and dev['maxInputChannels'] > 0:
+            for i in range(p.get_device_count()):
+                dev = p.get_device_info_by_index(i)
+                if "OP-Z" in dev.get('name', '') and dev.get('maxInputChannels', 0) > 0:
                     self.audio_device = i
                     break
-            devinfo = p.get_device_info_by_index(self.audio_device)
-            p.is_format_supported(48000, input_device=devinfo['index'], input_channels=devinfo['maxInputChannels'], input_format=pyaudio.paInt16)
-            self.RATE = 48000
+
+            if self.audio_device is not None:
+                devinfo = p.get_device_info_by_index(self.audio_device)
+                try:
+                    if p.is_format_supported(48000, input_device=devinfo['index'],
+                                             input_channels=devinfo['maxInputChannels'],
+                                             input_format=pyaudio.paInt16):
+                        self.RATE = 48000
+                    else:
+                        self.RATE = 44100
+                except:
+                    self.RATE = 44100
+
+                self.safe_set_text(f"Audio device found: {devinfo['name']} at {self.RATE}Hz")
+            else:
+                self.safe_set_text("OP-Z Audio Device not found.")
         except Exception as e:
-            self.RATE = 44100
-            self.display_label.setText(f"Audio Error: {e}")
+            print("Audio Error:", e)
+            self.safe_set_text("Error accessing audio devices.")
+        finally:
+            p.terminate()
+
+    def setLoop(self):
+        try:
+            bpm = int(self.bpm_input.text())
+            bar = self.bar_input.value()
+            addsec = self.add_sec.value()
+            self.loop_time = (240 / bpm * bar) + addsec
+            print("Loop time set!", self.loop_time)
+            self.displaymsg.setText("BPM Set!")
+        except Exception as e:
+            print("Loop setup error:", e)
+            self.loop_time = None
+            self.displaymsg.setText("Please enter a valid BPM (number).")
+
+    def setParam(self):
+        self.setLoop()
+        # mode = mode_select.get()
 
     def openMidi(self):
-        try:
-            self.outport = mido.open_output(self.op_device)
-        except Exception as e:
-            self.display_label.setText(f"Open MIDI Error: {e}")
+        self.outport = mido.open_output(self.op_device)
+
+    def setProject(self, projnr):
+        msg = mido.Message('program_change', song=self.projnr, program=1)
+        self.outport.send(msg)
+
+    def muteAll(self):
+        for j in range(8):
+            self.mute_list[j] = 1
+
+        for i in range(6):
+            self.mute_list[i+8] = int(self.modifier_values[i].isChecked())
+
+        for k in range(14):
+            msg = mido.Message('control_change', control=53, channel=k, value=self.mute_list[k])
+            self.outport.send(msg)
+            time.sleep(0.1)
+
+    def setSolo(self, chn):
+        msg = mido.Message('control_change', control=53, channel=chn, value=0)
+        self.outport.send(msg)
+
+    def start_MIDI(self):
+        msg = mido.Message('start')
+        self.outport.send(msg)
+        self.safe_set_text("Playback started")
+
+    def stop_MIDI(self):
+        msg = mido.Message('stop')
+        self.outport.send(msg)
+        self.safe_set_text("Playback stopped")
+
+    def unmuteAll(self):
+        for i in range(15):
+            msg = mido.Message('control_change', control=53, channel=i, value=0)
+            self.outport.send(msg)
+
+    def nextPattern(self):
+        msg = mido.Message('control_change', control=103, value=16)
+        self.outport.send(msg)
+        self.safe_set_text("Next Pattern")
+
+    def nextSong(self):
+        pass
 
     def closeMidi(self):
+        self.outport.close()
+        self.safe_set_text("MIDI closed")
+
+    def setPath(self):
+        folder = self.name_input.text()
+        path = QFileDialog.getExistingDirectory(self, "Select Directory")
+        if path:
+            self.projectpath = f"{path}/{folder}"
+            try:
+                os.makedirs(self.projectpath)
+                self.safe_set_text("Directory set!")
+            except Exception as e:
+                self.safe_set_text("Directory Error. Please enter different Name.")
+
+    def makeDir(self, path, folder):
+        self.projectpath = f"{path}/{folder}"
         try:
-            if self.outport:
-                self.outport.close()
-                self.display_label.setText("MIDI closed")
+            os.makedirs(self.projectpath)
         except Exception as e:
-            self.display_label.setText(f"Close MIDI Error: {e}")
+            self.safe_set_text("Directory Error. Please enter different Name.")
+
+    def makeDirNr(self, pattern_nr):
+        try:
+            os.makedirs(f"{self.projectpath}/{pattern_nr}")
+        except Exception as e:
+            self.safe_set_text("Directory Error")
 
     def start_Rec(self):
+        if self.audio_device is None:
+            self.safe_set_text("No audio device set.")
+            return
+
+        CHUNK = 128
+        FORMAT = pyaudio.paInt16
+        CHANNELS = 2
+        RECORD_SECONDS = self.loop_time
+        WAVE_OUTPUT_FILENAME = f"{self.name_input.text()}_track{self.j + 1}.wav"
+
+        p = pyaudio.PyAudio()
+        stream = None
         try:
-            self.display_label.setText("Recording...")
-            CHUNK = 128
-            FORMAT = pyaudio.paInt16
-            CHANNELS = 2
-            RECORD_SECONDS = self.loop_time
-            WAVE_OUTPUT_FILENAME = f"{self.name_input.text()}_track{self.j+1}.wav"
-            p = pyaudio.PyAudio()
             stream = p.open(format=FORMAT,
                             channels=CHANNELS,
                             rate=self.RATE,
@@ -229,107 +473,100 @@ class Midirecorder(QMainWindow):
                             input_device_index=self.audio_device,
                             frames_per_buffer=CHUNK)
 
-            frames = []
             self.start_MIDI()
-            for _ in range(0, int(self.RATE / CHUNK * RECORD_SECONDS)):
-                data = stream.read(CHUNK)
+            frames = []
+
+            for _ in range(int(self.RATE / CHUNK * RECORD_SECONDS)):
+                data = stream.read(CHUNK, exception_on_overflow=False)
                 frames.append(data)
 
-            stream.stop_stream()
-            stream.close()
+            if self.mode_select == 2:
+                out_path = f"{self.projectpath}/{self.pattern_nr}/{WAVE_OUTPUT_FILENAME}"
+            else:
+                out_path = f"{self.projectpath}/{WAVE_OUTPUT_FILENAME}"
+
+            with wave.open(out_path, 'wb') as wf:
+                wf.setnchannels(CHANNELS)
+                wf.setsampwidth(p.get_sample_size(FORMAT))
+                wf.setframerate(self.RATE)
+                wf.writeframes(b''.join(frames))
+
+            self.safe_set_text(f"Recording complete: {WAVE_OUTPUT_FILENAME}")
+            self.j = (self.j + 1) % 8
+
+        except Exception as e:
+            print("Recording Error:", e)
+            self.safe_set_text("Recording failed. Check device or try again.")
+        finally:
+            if stream:
+                stream.stop_stream()
+                stream.close()
             p.terminate()
 
-            folder = self.projectpath
-            if self.mode_select_project.isChecked():
-                folder = os.path.join(folder, str(self.pattern_nr))
+    def sequenceMaster(self):
+        self.cancel = False
+        self.getMIDIDevice()
+        time.sleep(1)
+        self.getAudioDevice()
 
-            os.makedirs(folder, exist_ok=True)
-            wf = wave.open(os.path.join(folder, WAVE_OUTPUT_FILENAME), 'wb')
-            wf.setnchannels(CHANNELS)
-            wf.setsampwidth(p.get_sample_size(FORMAT))
-            wf.setframerate(self.RATE)
-            wf.writeframes(b''.join(frames))
-            wf.close()
+        if not hasattr(self, "op_device") or not hasattr(self, "audio_device"):
+            self.displaymsg.setText("Device(s) not initialized properly.")
+            return
 
-            self.j = (self.j + 1) % 8
-            self.display_label.setText("End of Recording")
-        except Exception as e:
-            self.display_label.setText(f"Recording Error: {e}")
-
-    def start_MIDI(self):
         try:
             self.openMidi()
-            self.muteAll()
-        except Exception as e:
-            self.display_label.setText(f"Start MIDI Error: {e}")
+            self.displaymsg.setText("Sequence started")
 
-    def stop_MIDI(self):
-        try:
-            self.muteAll()
+            total_patterns = self.patterns_input.value()
+            project_mode = self.mode_select == 2  # "Project" mode
+
+            if project_mode:
+                self.pattern_nr = 0
+
+            for pattern_index in range(total_patterns):
+                if self.cancel:
+                    break
+
+                if project_mode:
+                    self.makeDirNr(pattern_index)
+                    self.pattern_nr = pattern_index
+
+                for track_index in range(8):  # Always 8 tracks per pattern
+                    if self.cancel:
+                        break
+
+                    print(f"Pattern {pattern_index + 1}, Track {track_index + 1}")
+                    self.muteAll()
+                    time.sleep(0.1)
+                    self.setSolo(track_index)
+                    self.start_Rec()
+                    self.stop_MIDI()
+                    time.sleep(1)
+                    self.unmuteAll()
+                    time.sleep(1)
+
+                if project_mode:
+                    self.nextPattern()
+                    time.sleep(5)
+
+            self.displaymsg.setText("Recording session complete.")
+
+        except Exception as e:
+            print("Sequence error:", e)
+            self.displaymsg.setText("Error: try restarting OP-Z or cancel.")
+        finally:
             self.closeMidi()
-        except Exception as e:
-            self.display_label.setText(f"Stop MIDI Error: {e}")
 
-    def muteAll(self):
-        try:
-            if not self.outport:
-                self.display_label.setText("MIDI port not open for muteAll")
-                return
-            for i in range(14):
-                msg = mido.Message('control_change', control=i, value=0)
-                self.outport.send(msg)
-                self.mute_list[i] = 0
-        except Exception as e:
-            self.display_label.setText(f"MuteAll Error: {e}")
-
-    def setSolo(self, index):
-        try:
-            if not self.outport:
-                self.display_label.setText("MIDI port not open for setSolo")
-                return
-            # Mute all first
-            self.muteAll()
-            # Unmute the solo
-            msg = mido.Message('control_change', control=index, value=127)
-            self.outport.send(msg)
-            self.mute_list[index] = 1
-        except Exception as e:
-            self.display_label.setText(f"SetSolo Error: {e}")
-
-    def setParam(self):
-        # Your parameter setting logic here, no hardware access so no exception wrapping needed
-        self.display_label.setText("Parameters set")
-
-    def setPath(self):
-        try:
-            path = QFileDialog.getExistingDirectory(self, "Select Project Directory", os.getcwd())
-            if path:
-                self.projectpath = path
-                self.display_label.setText(f"Project path set: {path}")
-        except Exception as e:
-            self.display_label.setText(f"Set Path Error: {e}")
+    def startRecording(self):
+        threading.Thread(target=self.sequenceMaster).start()
 
     def cancelRec(self):
-        self.cancel = 1
-        self.display_label.setText("Cancel requested")
-
-    def sequenceMaster(self):
-        try:
-            # This is a placeholder for your sequence master logic.
-            # Use try-except inside if needed.
-            self.getMIDIDevice()
-            self.getAudioDevice()
-            self.loop_time = self.bar_input.value() * 4 * 60 / float(self.bpm_input.text())
-            self.pattern_nr = self.patterns_input.value()
-
-            self.start_Rec()
-            self.stop_MIDI()
-        except Exception as e:
-            self.display_label.setText(f"SequenceMaster Error: {e}")
-
+        self.j = 0
+        self.cancel = True
+        self.closeMidi()
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    app = QApplication([])
     window = Midirecorder()
     window.show()
-    sys.exit(app.exec())
+    app.exec()
