@@ -92,7 +92,7 @@ class Midirecorder:
             ui.label('Enter Parameter, then press set Param, choose directory and start recording').classes('w-full p-2 text-center mb-4').style('background-color: grey; color: white')
             
             # Footer
-            ui.label('donate <3 @ https://link.raise-uav.com').classes('text-center w-full')
+            ui.link('Get Underbridge2 Pro at https://app.raise-uav.com').classes('text-center w-full')
     
     def update_mode(self, e):
         self.mode_select = 2 if e.value == "Project" else 3
@@ -350,7 +350,8 @@ def main():
         reload=False,
         show=False,
         favicon='logo.ico',
-        storage_secret='underbridge-secret'
+        storage_secret='underbridge-secret',
+        native=True
     )
 
 
