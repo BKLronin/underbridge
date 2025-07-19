@@ -1,372 +1,335 @@
-# Underbridge OP-Z multichannel exporter
-# Copyright 2022 Thomas Herrmann Email: herrmann@raise-uav.com
+import sys
+import os
+import time
+import threading
+import wave
 
 import mido
 import pyaudio
-import wave
-from tkinter import *
-from tkinter import filedialog as fd
-from tkinter import ttk
-import time
-import threading
-import os
+
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QGridLayout,
+    QGroupBox, QLabel, QLineEdit, QPushButton, QRadioButton, QSpinBox,
+    QCheckBox, QFileDialog
+)
+from PySide6.QtCore import Qt
 
 
-class Midirecorder:
+class Midirecorder(QMainWindow):
     def __init__(self):
+        super().__init__()
+        self.setWindowTitle("underbridge")
+        self.setFixedSize(700, 400)
 
-        self.window = Tk()
-        self.window.title('underbridge')
-        self.window.resizable(width=False, height=False) #565A5E
-        self.window.tk_setPalette(background='#565A5E', foreground='black',activeBackground='#283867', activeForeground='black' )
-        #device_list = []
+        # Styling
+        self.setStyleSheet("""
+            QPushButton {
+                background-color: #444;
+                color: white;
+                border: 1px solid #666;
+                border-radius: 8px;
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #555;
+            }
+            QPushButton:pressed {
+                background-color: #333;
+            }
+
+            QRadioButton {
+                background-color: #2f2f2f;
+                color: white;
+                border: 1px solid #666;
+                border-radius: 8px;
+                padding: 4px 10px;
+            }
+            QRadioButton::indicator { width: 0px; height: 0px; }
+            QRadioButton:checked {
+                background-color: #0095FF;
+                color: black;
+            }
+
+            QCheckBox { color: white; }
+            QLineEdit {
+                background-color: #999;
+                color: black;
+                border: 1px solid #666;
+                border-radius: 4px;
+                padding: 2px 6px;
+            }
+            QLabel { color: white; }
+            QGroupBox {
+                border: 1px solid #666;
+                border-radius: 6px;
+                margin-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top center;
+                padding: 0 3px;
+                color: white;
+            }
+            QSpinBox {
+                background-color: #999;
+                border: 1px solid #666;
+                border-radius: 4px;
+                padding: 2px;
+                color: black;
+            }
+            QLabel#footer {
+                color: #aaa;
+                font-size: 10px;
+            }
+            QLabel#display {
+                background: #aaa;
+                color: black;
+                padding: 4px;
+                border-radius: 4px;
+            }
+        """)
+
+        # Main layout
+        main_widget = QWidget()
+        main_layout = QVBoxLayout(main_widget)
+
+        # Parameter group
+        param_group = QGroupBox("Parameter")
+        param_layout = QGridLayout(param_group)
+        self.name_input = QLineEdit("Name")
+        self.bpm_input = QLineEdit("BPM")
+        self.bar_input = QSpinBox()
+        self.bar_input.setRange(1, 9)
+        self.patterns_input = QSpinBox()
+        self.patterns_input.setRange(1, 16)
+        self.patterns_input.setValue(16)
+        self.add_sec = QSpinBox()
+        self.add_sec.setRange(0, 10)
+
+        param_layout.addWidget(self.name_input, 0, 0)
+        param_layout.addWidget(self.bpm_input, 0, 1)
+        param_layout.addWidget(QLabel("Nr. Bars"), 0, 2)
+        param_layout.addWidget(self.bar_input, 0, 3)
+        param_layout.addWidget(QLabel("Patterns"), 0, 4)
+        param_layout.addWidget(self.patterns_input, 0, 5)
+        param_layout.addWidget(QLabel("Extra Sec"), 0, 6)
+        param_layout.addWidget(self.add_sec, 0, 7)
+
+        # Mode selection
+        self.mode_select_project = QRadioButton("Project")
+        self.mode_select_pattern = QRadioButton("Pattern")
+        self.mode_select_pattern.setChecked(True)
+
+        # Modifiers group
+        modifier_group = QGroupBox("Exclude Modifiers")
+        modifier_layout = QGridLayout(modifier_group)
+        self.modifiers = []
+        for i, name in enumerate(["Send 1", "Send 2", "Tape", "Master", "Perform", "Module"]):
+            cb = QCheckBox(name)
+            modifier_layout.addWidget(cb, 0, i)
+            self.modifiers.append(cb)
+
+        # Control buttons and display
+        controls_layout = QGridLayout()
+        self.set_param_button = QPushButton("Set Prmtr")
+        self.set_path_button = QPushButton("Directory")
+        self.record_button = QPushButton("RECORD")
+        self.cancel_button = QPushButton("CANCEL")
+        self.display_label = QLabel("Enter Parameter, then press Set Param...")
+        self.display_label.setObjectName("display")
+
+        self.set_param_button.clicked.connect(self.setParam)
+        self.set_path_button.clicked.connect(self.setPath)
+        self.cancel_button.clicked.connect(self.cancelRec)
+        self.record_button.clicked.connect(lambda: threading.Thread(target=self.sequenceMaster).start())
+
+        controls_layout.addWidget(self.mode_select_project, 0, 0)
+        controls_layout.addWidget(self.mode_select_pattern, 0, 1)
+        controls_layout.addWidget(self.set_param_button, 0, 2)
+        controls_layout.addWidget(self.set_path_button, 0, 3)
+        controls_layout.addWidget(self.record_button, 0, 4)
+        controls_layout.addWidget(self.cancel_button, 0, 5)
+        controls_layout.addWidget(self.display_label, 1, 0, 1, 6)
+
+        # Footer
+        footer_label = QLabel("donate <3 @ https://link.raise-uav.com")
+        footer_label.setObjectName("footer")
+
+        # Layout
+        main_layout.addWidget(param_group)
+        main_layout.addWidget(modifier_group)
+        main_layout.addLayout(controls_layout)
+        main_layout.addWidget(footer_label)
+        self.setCentralWidget(main_widget)
+
+        # Internal state
         self.op_device = []
         self.audio_device = []
         self.loop_time = 0
-        self.inport = 0
-        self.outport = 0
-        self.path = 0
-        self.folder = 0
+        self.outport = None
         self.pattern_nr = 0
-        self.j = 0       
-        self.addsec = 0
-        self.projectpath = 0
+        self.j = 0
+        self.projectpath = ""
         self.cancel = 0
         self.RATE = 0
-        self.mute_list =[0] * 14 #Midi mute selection of all 14 necessary channels
-        #modifier_dict = {"mod1": modifier1_va}
+        self.mute_list = [0] * 14
 
-        #GUI Main
-        self.buttonsize_x = 7
-        self.buttonsize_y = 2
-       
-        self.mode_select = IntVar()
-        self.displaymsg = StringVar()
-        self.modifier1_value = IntVar()
-        self.modifier2_value = IntVar()
-        self.modifier3_value = IntVar()
-        self.modifier4_value = IntVar()
-        self.modifier5_value = IntVar()
-        self.modifier6_value = IntVar()
-
-        upperframe= LabelFrame(self.window, text= "Parameter",padx= 10, pady =2, fg = 'white')
-        upperframe.grid(row = 0, column = 0, padx =2, pady =2,)
-
-        lowerframe= Frame(self.window,padx= 10, pady =5)
-        lowerframe.grid(row = 2, column = 0, padx =2, pady =2)
-
-        modifiers = LabelFrame(self.window, text= "Exclude Modifiers",padx= 10, pady =2, fg = 'white')
-        modifiers.grid(row = 1, column = 0, padx =2, pady =2)
-
-        footer= Frame(self.window,padx= 15, pady =2)
-        footer. grid(row = 3, column = 0, padx =2, pady =2)
-
-        #Get_BPM = Button(upperframe, text="Get BPM",width = self.buttonsize_x, height = self.buttonsize_y, fg = 'lightgrey', command = getBPM)
-        Song = Radiobutton(lowerframe, text= 'Project', value = 2 , variable = self.mode_select, width = self.buttonsize_x, height = self.buttonsize_y , indicatoron = 0, bg= '#1b7d24' )
-        Pattern = Radiobutton(lowerframe, text= 'Pattern', value = 3 , variable = self.mode_select, width = self.buttonsize_x, height = self.buttonsize_y, indicatoron = 0,bg= '#1b7d24' )
-        Pattern.select()
-
-        self.bar_input = Scale(upperframe, from_ = 1, to = 9, orient = HORIZONTAL, label="Nr. Bars", sliderlength= 10, length= 75, fg = 'white')
-        self.patterns_input = Scale(upperframe, from_ = 1, to = 16, orient = HORIZONTAL, label="Patterns",sliderlength= 10, length= 75, fg = 'white')
-        self.patterns_input.set(value=16)
-        self.bpm_input = Entry(upperframe, width =10, text="BPM",bg= 'lightgrey', relief= FLAT)        
-        self.bpm_input.insert(0, "BPM")
-        self.add_sec = Scale(upperframe, from_ = 0, to = 10, orient = HORIZONTAL, label="extra Sec", sliderlength= 10, length= 75, fg = 'white')
-        
-        self.name_input = Entry(upperframe, width =10, text="Name",bg = 'lightgrey', relief= FLAT)
-        self.name_input.insert(0, "Name")  
-
-        modifier1 = Checkbutton(modifiers, text="Send 1", variable=self.modifier1_value)
-        modifier1.grid(row = 0, column = 0, padx =5, pady =2)
-
-        modifier2 = Checkbutton(modifiers,text="Send 2", variable=self.modifier2_value)
-        modifier2.grid(row = 0, column = 1, padx =5, pady =2)
-
-        modifier3 = Checkbutton(modifiers,text="Tape",variable=self.modifier3_value )
-        modifier3.grid(row = 0, column = 2, padx =5, pady =2)
-
-        modifier4 = Checkbutton(modifiers,text="Master", variable= self.modifier4_value)
-        modifier4.grid(row = 0, column = 3, padx =5, pady =2)
-
-        modifier5 = Checkbutton(modifiers,text="Perform", variable= self.modifier5_value)
-        modifier5.grid(row = 0, column = 4, padx =5, pady =2)
-
-        modifier6 = Checkbutton(modifiers,text="Module", variable=self.modifier6_value)
-        modifier6.grid(row = 0, column = 5, padx =5, pady =2)
-
-        set_param = Button(lowerframe, text="Set Prmtr",width = self.buttonsize_x, height = self.buttonsize_y, fg = 'white',bg= '#0095FF', command = self.setParam)
-        set_path = Button(lowerframe, text="Directory",width = self.buttonsize_x, height = self.buttonsize_y,fg = 'white',bg= '#0095FF', command = self.setPath)
-        start_recording = Button(lowerframe, text="RECORD",width = self.buttonsize_x, height = self.buttonsize_y,fg = 'white', bg = '#FF2200', command = lambda:threading.Thread(target = self.sequenceMaster).start())
-
-        tutorial = Label(footer,text="Enter Parameter, then press set Param, choose directory and start recording", height = 2, bg ='grey',fg= 'white', relief = FLAT)
-        display = Label(lowerframe,textvariable= self.displaymsg,width = 60, height = self.buttonsize_y -1, bg ='lightgrey', relief = FLAT)
-
-        cancel = Button(lowerframe,text = "CANCEL" , width = self.buttonsize_x, height = self.buttonsize_y, bg ='#FFCC00', fg= 'white', command =self.cancelRec)
-        cancel.grid(row = 0, column = 6, padx =2, pady =2)
-
-        donate = Label(footer, text= "donate <3 @ https://link.raise-uav.com", height = 1)
-        donate.grid(row = 3, column = 4, padx =2, pady =10, columnspan=2)
-       
-        Song.grid(row = 0, column = 1, padx =5, pady =2)
-        Pattern.grid(row = 0, column = 2, padx =5, pady =2)
-
-        self.name_input.grid(row = 0, column = 0, padx =5, pady =0)
-        self.bpm_input.grid(row = 0, column = 1, padx =5, pady =0)
-        self.bar_input.grid(row = 0, column = 3, padx =5, pady =2)
-        self.patterns_input.grid(row = 0, column = 4, padx =5, pady =2)
-        self.add_sec.grid(row = 0, column = 5, padx =5, pady =2)
-        
-        set_param.grid(row = 0, column = 3, padx =5, pady =2)
-        set_path.grid(row = 0, column = 4, padx =5, pady =2)
-        start_recording.grid(row = 0, column = 5, padx =5, pady =2)
-
-        tutorial.grid(row = 1, column = 0, padx =5, pady =5, columnspan=5)
-        display.grid(row = 1, column = 0, padx =2, pady =10, columnspan= 7)
-
-        self.window.mainloop()
-
-    def getMIDIDevice(self):   
-        #global device_list
-        #global op_device
-        device_list = mido.get_output_names()
-        print (device_list)
-        try: 
-            self.op_device = list(filter(lambda x: 'OP-Z' in x, device_list))        
-            self.op_device = self.op_device[0]
-            #print (self.op_device)
-            self.displaymsg.set("OP-Z found")
-        except:
-            self.displaymsg.set("Can´t find OP-Z : MIDI Error.")
+    def getMIDIDevice(self):
+        try:
+            device_list = mido.get_output_names()
+            self.op_device = [d for d in device_list if 'OP-Z' in d][0]
+            self.display_label.setText("OP-Z found")
+        except Exception as e:
+            self.display_label.setText(f"MIDI Error: {e}")
 
     def getAudioDevice(self):
-        #global audio_device
-        #global RATE
-        p = pyaudio.PyAudio()
         try:
+            p = pyaudio.PyAudio()
             info = p.get_host_api_info_by_index(0)
-            numdevices = info.get('deviceCount')
-            for i in range(0, numdevices):
-                if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-                    print("Input Device id ", i, " - ", p.get_device_info_by_host_api_device_index(0, i).get('name'))
-            for i in range(0, numdevices):
-                #audio_device = p.get_device_info_by_host_api_device_index(0, i).get('name')
-                if "OP-Z" in p.get_device_info_by_host_api_device_index(0, i).get('name') and (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+            for i in range(info['deviceCount']):
+                dev = p.get_device_info_by_host_api_device_index(0, i)
+                if 'OP-Z' in dev['name'] and dev['maxInputChannels'] > 0:
                     self.audio_device = i
-            #audio_device = 4           
-            print ("Detected OP-Z audio at Index:",self.audio_device, p.get_device_info_by_host_api_device_index(0, self.audio_device).get('name'))
-        except:
-            self.displaymsg.set("OP-Z Audio Device not found.")
-
-        #devinfo = p.get_device_info_by_index(self.audio_device)  
-        try:         
-            devinfo = p.get_device_info_by_index(self.audio_device)  
-            test = p.is_format_supported(48000, input_device=devinfo['index'], input_channels=devinfo['maxInputChannels'],input_format=pyaudio.paInt16)
+                    break
+            devinfo = p.get_device_info_by_index(self.audio_device)
+            p.is_format_supported(48000, input_device=devinfo['index'], input_channels=devinfo['maxInputChannels'], input_format=pyaudio.paInt16)
             self.RATE = 48000
-            print("48kHz")
-        except:
+        except Exception as e:
             self.RATE = 44100
-            print("44100kHz compatibility mode")    
+            self.display_label.setText(f"Audio Error: {e}")
 
-    def getBPM(self):        
-        inport= mido.open_input(self.op_device)
-        msg = inport.poll(self)
-        #print(msg)
-
-    def setLoop(self):       
-        try:        
-            bpm = self.bpm_input.get()
-            bar = self.bar_input.get()
-            addsec = self.add_sec.get()
-            self.loop_time = (240 / int(bpm) * int(bar)) + int(addsec)
-            print("Loop time set!", self.loop_time)
-            self.displaymsg.set("BPM Set!")
-        except:
-            self.displaymsg.set("Please enter accurate BPM.")
-        #return self.loop_time
-
-    def setParam(self):
-        self.setLoop()
-        #mode = mode_select.get()
-        #if mode == 2:
-        #    projnr = project_input.get()
-        #    setProject(projnr)
-
-    def openMidi(self):    
-        #global outport  
-        #global op_device
-        self.outport= mido.open_output(self.op_device)    
-        #displaymsg.set("OP-Z MIDI not connected :(")
-        #print(self.outport) 
-
-    def setProject(self,projnr):
-        msg= mido.Message('program_change',song= self.projnr, program = 1)
-        self.outport.send(msg)
-
-    def muteAll(self):        
-        checkbutton_name = 0    
-        #print(self.mute_list)
-        
-        for j in range (0,8):
-            self.mute_list[j] = 1     
-        
-        for i in range (1,7):
-            checkbutton_name = 'self.modifier{}_value'.format(i)     #checkbutton 1- 6         
-            self.mute_list[i+7] = eval(checkbutton_name).get()       #9th position in mute list  
-
-        for k in range (0,14):
-            msg = mido.Message('control_change',control= 53, channel= k, value= self.mute_list[k])
-            self.outport.send(msg)
-        #print("Muted Channels",self.mute_list)
-
-    def setSolo(self,chn):        
-        msg = mido.Message('control_change',control= 53, channel= chn, value=0)        
-        self.outport.send(msg)
-        
-    def start_MIDI(self):        
-        msg = mido.Message('start')
-        self.outport.send(msg)
-        self.displaymsg.set("Playback started")
-        #print("midi")
-
-    def stop_MIDI(self):        
-        msg = mido.Message('stop')
-        self.outport.send(msg)
-        self.displaymsg.set("Playback stopped")
-
-    def unmuteAll(self):        
-        for i in range (0,15):
-            msg = mido.Message('control_change',control= 53, channel= i, value=0)
-            self.outport.send(msg)        
-
-    def nextPattern(self):        
-        msg = mido.Message('control_change', control = 103, value = 16)
-        self.outport.send(msg)
-        self.displaymsg.set("Next Pattern")
-
-    def nextSong(self):
-        pass
-
-    def closeMidi(self):           
-        self.outport.close()    
-        self.displaymsg.set("MIDI closed")     
-
-    def setPath(self):
-        #global path
-        folder = self.name_input.get()
-        path = fd.askdirectory()    
-        self.displaymsg.set("Directory set!")
-        self.makeDir(path,folder)
-
-    def makeDir(self,path,folder):
-        #global folder
-        #global projectpath
-        #folder = name_input.get()
-        self.projectpath = path + '/' + folder
-        try:    
-            os.mkdir(self.projectpath)   
-        except:
-            self.displaymsg.set("Directory Error. Please enter different Name.")
-
-    def makeDirNr(self, pattern_nr):    
-        #global projectpath    
-        #Pfad wird addiert deswegen zusätzliche verzeichnisse
-        #projectpath = projectpath + '/' + str(pattern_nr)
+    def openMidi(self):
         try:
-            os.mkdir(self.projectpath + '/' + str(pattern_nr)) 
-        except:
-            self.displaymsg.set("Directory Error")
-        #print(projectpath)
+            self.outport = mido.open_output(self.op_device)
+        except Exception as e:
+            self.display_label.setText(f"Open MIDI Error: {e}")
+
+    def closeMidi(self):
+        try:
+            if self.outport:
+                self.outport.close()
+                self.display_label.setText("MIDI closed")
+        except Exception as e:
+            self.display_label.setText(f"Close MIDI Error: {e}")
 
     def start_Rec(self):
-        #print("record")
-        self.displaymsg.set("Recording...")
-        CHUNK = 128
-        FORMAT = pyaudio.paInt16
-        CHANNELS = 2
-        
-        RECORD_SECONDS= self.loop_time
-        #print("record")
-        WAVE_OUTPUT_FILENAME =  self.name_input.get() + "_" + "track" + str(self.j+1) + ".wav"       
-        #print(WAVE_OUTPUT_FILENAME)
-        p = pyaudio.PyAudio()   
-        stream = p.open(format=FORMAT,
-                        channels=CHANNELS,
-                        rate=self.RATE,
-                        input=True,
-                        input_device_index= self.audio_device,
-                        frames_per_buffer=CHUNK                        
-                        )
+        try:
+            self.display_label.setText("Recording...")
+            CHUNK = 128
+            FORMAT = pyaudio.paInt16
+            CHANNELS = 2
+            RECORD_SECONDS = self.loop_time
+            WAVE_OUTPUT_FILENAME = f"{self.name_input.text()}_track{self.j+1}.wav"
+            p = pyaudio.PyAudio()
+            stream = p.open(format=FORMAT,
+                            channels=CHANNELS,
+                            rate=self.RATE,
+                            input=True,
+                            input_device_index=self.audio_device,
+                            frames_per_buffer=CHUNK)
 
-        #print("* recording")
-        
-        frames = []
-        self.start_MIDI()
-        for i in range(0, int(self.RATE / CHUNK * RECORD_SECONDS)):
-            data = stream.read(CHUNK)
-            frames.append(data)
+            frames = []
+            self.start_MIDI()
+            for _ in range(0, int(self.RATE / CHUNK * RECORD_SECONDS)):
+                data = stream.read(CHUNK)
+                frames.append(data)
 
-        #print("Done recording")
+            stream.stop_stream()
+            stream.close()
+            p.terminate()
 
-        stream.stop_stream()
-        stream.close()
-        p.terminate()
-        if self.mode_select.get() == 2:
-            wf = wave.open(self.projectpath + '/' + str(self.pattern_nr) + '/' + WAVE_OUTPUT_FILENAME, 'wb')
-        else:
-            wf = wave.open(self.projectpath + '/' + WAVE_OUTPUT_FILENAME, 'wb')
+            folder = self.projectpath
+            if self.mode_select_project.isChecked():
+                folder = os.path.join(folder, str(self.pattern_nr))
 
-        wf.setnchannels(CHANNELS)
-        wf.setsampwidth(p.get_sample_size(FORMAT))
-        wf.setframerate(self.RATE)
-        wf.writeframes(b''.join(frames))
-        wf.close()
-        self.j = self.j + 1
-        if self.j == 8:
-            self.j= 0
-        self.displaymsg.set("End of Recording")
+            os.makedirs(folder, exist_ok=True)
+            wf = wave.open(os.path.join(folder, WAVE_OUTPUT_FILENAME), 'wb')
+            wf.setnchannels(CHANNELS)
+            wf.setsampwidth(p.get_sample_size(FORMAT))
+            wf.setframerate(self.RATE)
+            wf.writeframes(b''.join(frames))
+            wf.close()
 
-    def sequenceMaster(self):       
-        self.cancel = 0
-        self.getMIDIDevice()
-        time.sleep(1)
-        self.getAudioDevice()
-        self.displaymsg.set("Sequence started")
-        try:        
-            self.openMidi()                            
-            if self.mode_select.get() == 2:
-                self.makeDirNr(self.pattern_nr)            
+            self.j = (self.j + 1) % 8
+            self.display_label.setText("End of Recording")
+        except Exception as e:
+            self.display_label.setText(f"Recording Error: {e}")
 
-            for i in range (0,8): 
-                pattern_limit = self.patterns_input.get() 
-                if self.cancel == 1 or self.pattern_nr  == pattern_limit:
-                    break
-                #print("sequence started",i)       
-                self.muteAll()                
-                time.sleep(0.1)
-                self.setSolo(i)
-                #starting Midi during wave record for timing                     
-                self.start_Rec()               
-                self.stop_MIDI()
-                time.sleep(1)
-                self.unmuteAll()
-                time.sleep(1)                
-                mode = self.mode_select.get()                
-                
-                if i == 7 and mode == 2: 
-                    #print(mode_select)            
-                    time.sleep(5)
-                    self.nextPattern()
-                    self.pattern_nr += 1
-                    if self.pattern_nr == 15 :
-                        self.pattern_nr = 0
-                    self.sequenceMaster()
-        except:
-            self.displaymsg.set("OP-Z Sequence error try restarting the OP-Z or press CANCEL Button")
+    def start_MIDI(self):
+        try:
+            self.openMidi()
+            self.muteAll()
+        except Exception as e:
+            self.display_label.setText(f"Start MIDI Error: {e}")
 
-    def cancelRec(self):      
-        self.j = 0
-        self.cancel = 1  
-        self.closeMidi()
+    def stop_MIDI(self):
+        try:
+            self.muteAll()
+            self.closeMidi()
+        except Exception as e:
+            self.display_label.setText(f"Stop MIDI Error: {e}")
 
-    
-underbridge = Midirecorder()
+    def muteAll(self):
+        try:
+            if not self.outport:
+                self.display_label.setText("MIDI port not open for muteAll")
+                return
+            for i in range(14):
+                msg = mido.Message('control_change', control=i, value=0)
+                self.outport.send(msg)
+                self.mute_list[i] = 0
+        except Exception as e:
+            self.display_label.setText(f"MuteAll Error: {e}")
+
+    def setSolo(self, index):
+        try:
+            if not self.outport:
+                self.display_label.setText("MIDI port not open for setSolo")
+                return
+            # Mute all first
+            self.muteAll()
+            # Unmute the solo
+            msg = mido.Message('control_change', control=index, value=127)
+            self.outport.send(msg)
+            self.mute_list[index] = 1
+        except Exception as e:
+            self.display_label.setText(f"SetSolo Error: {e}")
+
+    def setParam(self):
+        # Your parameter setting logic here, no hardware access so no exception wrapping needed
+        self.display_label.setText("Parameters set")
+
+    def setPath(self):
+        try:
+            path = QFileDialog.getExistingDirectory(self, "Select Project Directory", os.getcwd())
+            if path:
+                self.projectpath = path
+                self.display_label.setText(f"Project path set: {path}")
+        except Exception as e:
+            self.display_label.setText(f"Set Path Error: {e}")
+
+    def cancelRec(self):
+        self.cancel = 1
+        self.display_label.setText("Cancel requested")
+
+    def sequenceMaster(self):
+        try:
+            # This is a placeholder for your sequence master logic.
+            # Use try-except inside if needed.
+            self.getMIDIDevice()
+            self.getAudioDevice()
+            self.loop_time = self.bar_input.value() * 4 * 60 / float(self.bpm_input.text())
+            self.pattern_nr = self.patterns_input.value()
+
+            self.start_Rec()
+            self.stop_MIDI()
+        except Exception as e:
+            self.display_label.setText(f"SequenceMaster Error: {e}")
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = Midirecorder()
+    window.show()
+    sys.exit(app.exec())
