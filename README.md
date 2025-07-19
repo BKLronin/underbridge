@@ -6,6 +6,7 @@
 
 - Exports patterns and projects individual audio tracks to seperate folders for use in your DAW.
 - Python cross plattform with single file binary for x86 linux Windows and Mac.
+- Modern web-based UI using NiceGUI (new in 2025 version).
 
 ## Using Packaged single file Binarys _(The easy way)_
 
@@ -94,3 +95,23 @@ open terminal and type: `python3 underbridge.py` to start
 ### Troubleshooting
 - When the recorded audio contains buzzing or other artifacts try disabling the USB charging with "display" and "bottom right key" to disable.
 - If the playback of the OP-Z starts correctly but no tracks are muted check that MIDI IN in the OP-Z app or via combo is enabled.
+
+## Creating Releases
+
+This project uses GitHub Actions to automatically build binaries for macOS and Windows when a new tag is pushed.
+
+To create a new release:
+
+1. Update the version number in the code if necessary
+2. Commit your changes
+3. Create and push a new tag:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The GitHub Actions workflow will automatically:
+- Build a macOS application bundle and DMG installer
+- Build a Windows executable
+- Create a GitHub release with both binaries attached
