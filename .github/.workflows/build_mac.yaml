@@ -1,0 +1,85 @@
+name: Build and Notarize macOS App
+
+on:
+  push:
+    branches: [ qt ]
+
+jobs:
+  build-macos:
+    runs-on: 'macos-latest'
+
+    defaults:
+      run:
+        shell: bash
+    env:
+      RUNNER_TOOL_CACHE: /toolcache
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Homebrew (if not installed)
+        run: |
+          if ! command -v brew &>/dev/null; then
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          else
+            echo "Homebrew is already installed"
+          fi
+
+      - name: Install Python 3.12
+        run: |
+          brew install python@3.12
+          echo 'export PATH="/usr/local/opt/python@3.12/bin:$PATH"' >> ~/.bash_profile
+          source ~/.bash_profile
+
+      - name: Install System Dependencies
+        run: |
+          brew install portaudio
+
+      - name: Create Virtual Environment
+        run: python3.12 -m venv packit/ubridge
+
+      - name: Install Python Dependencies
+        run: |
+          packit/ubridge/bin/python -m pip install --upgrade pip
+          packit/ubridge/bin/python -m pip install -r requirements.txt
+          packit/ubridge/bin/python -m pip install pyaudio python-rtmidi
+
+      - name: Debug Script Location
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -la
+
+      - name: Compile Nuitka
+        working-directory: ${{ github.workspace }}
+        run: packit/ubridge/bin/nuitka underbridge.py --assume-yes-for-downloads
+
+      - name: Sign Installer
+        working-directory: ${{ github.workspace }}
+        run: "codesign --force -s ${{ secrets.DEVELOPER_ID_APPLICATION }} --timestamp Underbridge-light-installer.dmg"
+
+      - name: Notarize Installer
+        working-directory: ${{ github.workspace }}
+        run: 'xcrun notarytool submit Underbridge-light-installer.dmg --apple-id ${{ secrets.APPLE_ID }} --password ${{ secrets.APPLE_PW }} --team-id ${{ secrets.APPLE_TEAM }} --wait'
+
+      - name: Staple Installer
+        working-directory: ${{ github.workspace }}
+        run: "xcrun stapler staple Underbridge-light-installer.dmg"
+
+      - name: Create GitHub Release and Upload Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "Underbridge-light Release"
+          tag: ${{ github.ref_name }}
+          draft: true
+          assets: |
+            Underbridge-light-installer.dmg
+
+      - name: Upload to Server
+        run: |
+          packit/ubridge/bin/python nc_upload.py \
+            ${{ secrets.UBRIDGE_USER }} \
+            ${{ secrets.UBRIDGE_PASSWD }} \
+            https://cloud.raise-uav.com/ \
+            Underbridge-light-installer.dmg \
+            App_Release/light/Underbridge-light-installer.dmg

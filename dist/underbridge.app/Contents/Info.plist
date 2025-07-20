@@ -3,22 +3,26 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>underbridge</string>
+	<string>Underbridge-light</string>
 	<key>CFBundleExecutable</key>
-	<string>underbridge</string>
+	<string>Underbridge-light</string>
 	<key>CFBundleIconFile</key>
-	<string>logo.ico</string>
+	<string>logo.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>underbridge</string>
+	<string>Underbridge-light</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>underbridge</string>
+	<string>Underbridge-light</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.0</string>
+	<string>1.0</string>
+	<key>NSFileSystemUsageDescription</key>
+	<string>Loading and Saving App Settings.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone access for recording audio.</string>
 </dict>
 </plist>

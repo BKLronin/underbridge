@@ -1,3 +1,25 @@
+## NUITKA section
+
+# nuitka-project: --plugin-enable=pyside6
+# nuitka-project: --include-package=mido
+# nuitka-project: --standalone
+# nuitka-project: --macos-create-app-bundle
+# nuitka-project: --output-filename=Underbridge-light
+# nuitka-project: --output-dir=dist
+# nuitka-project: --macos-app-name=Underbridge-light
+# nuitka-project: --macos-app-icon=logo.icns
+# nuitka-project: --macos-sign-identity=3DD66TDX7S
+# nuitka-project: --macos-sign-notarization
+# nuitka-project: --macos-app-protected-resource="NSMicrophoneUsageDescription:Microphone access for recording audio."
+# nuitka-project: --macos-app-protected-resource="NSFileSystemUsageDescription:Loading and Saving App Settings."
+# nuitka-project-if: {OS} in ("Linux"):
+#   nuitka-project: --standalone
+#   nuitka-project: --linux-icon=logo.png
+
+# nuitka-project: --windows-icon-from-ico=logo.ico
+# nuitka-project: --windows-console-mode='attach'
+
+
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton,
     QGroupBox, QHBoxLayout, QVBoxLayout, QGridLayout,
