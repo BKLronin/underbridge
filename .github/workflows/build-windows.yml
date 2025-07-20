@@ -1,0 +1,39 @@
+name: Build windows app
+
+on:
+  push:
+    branches: [ qt ]
+
+jobs:
+  build-windows:
+
+    runs-on: 'windows'
+    env:
+      RUNNER_TOOL_CACHE: /toolcache
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Underbridge Core Python Requirements
+        run: pip install -r requirements.txt
+
+      - run: pip install pyaudio
+      - run: pip install imageio
+      - run: pip install nuitka
+      - run: pip install argparse
+      - run: pip install requests
+
+      - name: Nuitka compile
+        run: nuitka Underbridge.py --assume-yes-for-downloads
+
+      - name: Create NSIS Installer
+        run: makensis wizard.nsi
+
+      - name: Check Files in upload folder
+        run: dir
+
+      - name: Python uploader
+        run: python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} https://cloud.raise-uav.com/ ubridge-light-wizard.exe App_Release/windows/Ubridge-light-wizard.exe
+
