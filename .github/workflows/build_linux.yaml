@@ -6,33 +6,30 @@ on:
 
 jobs:
   build-linux:
-    runs-on: 'ubuntu-latest'
-    container: catthehacker/ubuntu:act-latest
+    runs-on: ubuntu-latest
     env:
       RUNNER_TOOL_CACHE: /toolcache
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.12'  # Use stable Python that matches hosted runner's GLIBC
 
-      - run: apt update
-      - run: apt install -y portaudio19-dev
-      - run: apt install -y python3-pyaudio
-      - run: pip install wheel
-      - run: apt install patchelf
+      - run: sudo apt update
+      - run: sudo apt install -y portaudio19-dev python3-pyaudio patchelf
+
+      - run: pip install --upgrade pip wheel
       - run: pip install -r requirements.txt
-      - run: pip install nuitka
+      - run: pip install nuitka argparse requests
 
-      - name: build
+      - name: Build with Nuitka
         run: nuitka underbridge.py
-
-      - run: pip install argparse
-      - run: pip install requests
 
       - run: ls dist/
 
-      - name: zip
+      - name: Zip the output
         run: python zipit.py dist/Underbridge.dist ubridge-light.zip
 
       - name: NC uploader
