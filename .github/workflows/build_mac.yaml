@@ -40,9 +40,10 @@ jobs:
 
       - name: Install Python Dependencies
         run: |
-          packit/ubridge/bin/python -m pip install --upgrade pip
-          packit/ubridge/bin/python -m pip install -r requirements.txt
-          packit/ubridge/bin/python -m pip install pyaudio python-rtmidi
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pyaudio python-rtmidi
+          python -m pip install nuitka
 
       - name: Debug Script Location
         run: |
@@ -52,7 +53,7 @@ jobs:
 
       - name: Compile Nuitka
         working-directory: ${{ github.workspace }}
-        run: packit/ubridge/bin/nuitka underbridge.py --assume-yes-for-downloads
+        run: nuitka underbridge.py --assume-yes-for-downloads
 
       - name: Sign Installer
         working-directory: ${{ github.workspace }}
