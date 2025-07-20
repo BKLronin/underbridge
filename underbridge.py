@@ -4,7 +4,8 @@ from PySide6.QtWidgets import (
     QLineEdit, QRadioButton, QSlider, QCheckBox,
     QFrame, QFileDialog
 )
-from PySide6.QtCore import Qt
+
+from PySide6.QtCore import Qt, Signal
 import mido
 import pyaudio
 import wave
@@ -17,8 +18,10 @@ from PySide6.QtCore import QTimer
 
 
 class Midirecorder(QWidget):
+    status_changed = Signal(str)
     def __init__(self):
         super().__init__()
+        self.projectpath = None
         self.loop_time = None
         self.outport = None
         self.setWindowTitle('underbridge')
@@ -186,8 +189,10 @@ class Midirecorder(QWidget):
         self.create_lowerframe(layout)
         self.create_footer(layout)
 
-    def safe_set_text(self, text):
-        QTimer.singleShot(0, lambda: self.safe_set_text(text))
+        self.status_changed.connect(self.update_display)
+
+    def update_display(self, text):
+        self.displaymsg.setText(text)
 
     def create_upperframe(self, layout):
         upperframe = QGroupBox("Parameter")
@@ -198,7 +203,7 @@ class Midirecorder(QWidget):
         self.name_input.setPlaceholderText("Name")
 
         self.bpm_input = QLineEdit()
-        self.bpm_input.setPlaceholderText("BPM")
+        self.bpm_input.setPlaceholderText("120")
 
         self.bar_input = QSlider(Qt.Horizontal)
         self.bar_input.setRange(1, 10)
@@ -286,17 +291,17 @@ class Midirecorder(QWidget):
         lower_layout.addWidget(self.Song, 0, 0)
         lower_layout.addWidget(self.Pattern, 0, 1)
 
-        set_param = QPushButton("Set Prmtr")
-        set_path = QPushButton("Directory")
+        #set_param = QPushButton("Set Prmtr")
+        #set_path = QPushButton("Directory")
         start_recording = QPushButton("RECORD")
 
 
-        lower_layout.addWidget(set_param, 0, 2)
-        lower_layout.addWidget(set_path, 0, 3)
+        #lower_layout.addWidget(set_param, 0, 2)
+        #lower_layout.addWidget(set_path, 0, 3)
         lower_layout.addWidget(start_recording, 0, 4)
 
-        set_param.clicked.connect(self.setParam)
-        set_path.clicked.connect(self.setPath)
+        #set_param.clicked.connect(self.setParam)
+        #set_path.clicked.connect(self.setPath)
         start_recording.clicked.connect(self.startRecording)
 
         layout.addWidget(lowerframe, 2, 0)
@@ -306,14 +311,26 @@ class Midirecorder(QWidget):
         foot_layout = QVBoxLayout()
         footer.setLayout(foot_layout)
 
-        tutorial_label = QLabel("Enter Parameter, then press set Param, choose directory and start recording")
+        tutorial_label = QLabel("Enter Parameter, then press RECORDING button.")
+        tutorial_label.setAlignment(Qt.AlignCenter)
+        tutorial_label.setStyleSheet("color: darkgrey")
         #donate_label = QLabel("<a href='https://link.raise-uav.com'>donate <3 @ https://link.raise-uav.com</a>")
         #donate_label.setOpenExternalLinks(True)
 
+        sponsor_label = QLabel()
+        sponsor_label.setOpenExternalLinks(True)
+        sponsor_label.setText(
+            "<a href='https://app.raise-uav.com' style='color: #ff9966; text-decoration: underline;'>"
+            "Visit Sponsor </a>")
+        sponsor_label.setAlignment(Qt.AlignCenter)
+
         self.displaymsg = QLabel()
+        self.displaymsg.setAlignment(Qt.AlignCenter)
 
         foot_layout.addWidget(tutorial_label)
         foot_layout.addWidget(self.displaymsg)
+        foot_layout.addWidget(sponsor_label)
+
         #foot_layout.addWidget(donate_label)
         layout.addWidget(footer, 3, 0)
 
@@ -323,12 +340,12 @@ class Midirecorder(QWidget):
             print("Available MIDI Devices:", device_list)
             self.op_device = next((x for x in device_list if "OP-Z" in x), None)
             if self.op_device:
-                self.safe_set_text("OP-Z MIDI found")
+                self.status_changed.emit("OP-Z MIDI found")
             else:
-                self.safe_set_text("Can't find OP-Z : MIDI Error.")
+                self.status_changed.emit("Can't find OP-Z : MIDI Error.")
         except Exception as e:
             print("MIDI Error:", e)
-            self.safe_set_text("Error accessing MIDI devices.")
+            self.status_changed.emit("Error accessing MIDI devices.")
 
     def getAudioDevice(self):
         p = pyaudio.PyAudio()
@@ -352,12 +369,12 @@ class Midirecorder(QWidget):
                 except:
                     self.RATE = 44100
 
-                self.safe_set_text(f"Audio device found: {devinfo['name']} at {self.RATE}Hz")
+                self.status_changed.emit(f"Audio device found: {devinfo['name']} at {self.RATE}Hz")
             else:
-                self.safe_set_text("OP-Z Audio Device not found.")
+                self.status_changed.emit("OP-Z Audio Device not found.")
         except Exception as e:
             print("Audio Error:", e)
-            self.safe_set_text("Error accessing audio devices.")
+            self.status_changed.emit("Error accessing audio devices.")
         finally:
             p.terminate()
 
@@ -368,11 +385,11 @@ class Midirecorder(QWidget):
             addsec = self.add_sec.value()
             self.loop_time = (240 / bpm * bar) + addsec
             print("Loop time set!", self.loop_time)
-            self.displaymsg.setText("BPM Set!")
+            self.status_changed.emit("BPM Set!")
         except Exception as e:
             print("Loop setup error:", e)
             self.loop_time = None
-            self.displaymsg.setText("Please enter a valid BPM (number).")
+            self.status_changed.emit("<span style='color: yellow;'>Please enter a valid BPM (number).</span>")
 
     def setParam(self):
         self.setLoop()
@@ -404,12 +421,12 @@ class Midirecorder(QWidget):
     def start_MIDI(self):
         msg = mido.Message('start')
         self.outport.send(msg)
-        self.safe_set_text("Playback started")
+        self.status_changed.emit("Playback started")
 
     def stop_MIDI(self):
         msg = mido.Message('stop')
         self.outport.send(msg)
-        self.safe_set_text("Playback stopped")
+        self.status_changed.emit("Playback stopped")
 
     def unmuteAll(self):
         for i in range(15):
@@ -419,14 +436,14 @@ class Midirecorder(QWidget):
     def nextPattern(self):
         msg = mido.Message('control_change', control=103, value=16)
         self.outport.send(msg)
-        self.safe_set_text("Next Pattern")
+        self.status_changed.emit("Next Pattern")
 
     def nextSong(self):
         pass
 
     def closeMidi(self):
         self.outport.close()
-        self.safe_set_text("MIDI closed")
+        self.status_changed.emit("MIDI closed")
 
     def setPath(self):
         folder = self.name_input.text()
@@ -435,26 +452,26 @@ class Midirecorder(QWidget):
             self.projectpath = f"{path}/{folder}"
             try:
                 os.makedirs(self.projectpath)
-                self.safe_set_text("Directory set!")
+                self.status_changed.emit("Directory set!")
             except Exception as e:
-                self.safe_set_text("Directory Error. Please enter different Name.")
+                self.status_changed.emit("Directory Error. Please enter different Name.")
 
     def makeDir(self, path, folder):
         self.projectpath = f"{path}/{folder}"
         try:
             os.makedirs(self.projectpath)
         except Exception as e:
-            self.safe_set_text("Directory Error. Please enter different Name.")
+            self.status_changed.emit(f"{e}. Please enter different Name.")
 
     def makeDirNr(self, pattern_nr):
         try:
             os.makedirs(f"{self.projectpath}/{pattern_nr}")
         except Exception as e:
-            self.safe_set_text("Directory Error")
+            self.status_changed.emit("Directory Error")
 
     def start_Rec(self):
         if self.audio_device is None:
-            self.safe_set_text("No audio device set.")
+            self.status_changed.emit("No audio device set.")
             return
 
         CHUNK = 128
@@ -491,12 +508,12 @@ class Midirecorder(QWidget):
                 wf.setframerate(self.RATE)
                 wf.writeframes(b''.join(frames))
 
-            self.safe_set_text(f"Recording complete: {WAVE_OUTPUT_FILENAME}")
+            self.status_changed.emit(f"Recording complete: {WAVE_OUTPUT_FILENAME}")
             self.j = (self.j + 1) % 8
 
         except Exception as e:
             print("Recording Error:", e)
-            self.safe_set_text("Recording failed. Check device or try again.")
+            self.status_changed.emit("<span style='color: red;'>Recording failed. Check device or try again.</span>")
         finally:
             if stream:
                 stream.stop_stream()
@@ -504,18 +521,18 @@ class Midirecorder(QWidget):
             p.terminate()
 
     def sequenceMaster(self):
+
         self.cancel = False
         self.getMIDIDevice()
         time.sleep(1)
         self.getAudioDevice()
 
-        if not hasattr(self, "op_device") or not hasattr(self, "audio_device"):
-            self.displaymsg.setText("Device(s) not initialized properly.")
+        if not self.audio_device:
+            self.status_changed.emit("<span style='color: yellow;'>No OP-Z found try to restart both the device and the app.</span>")
             return
 
         try:
             self.openMidi()
-            self.displaymsg.setText("Sequence started")
 
             total_patterns = self.patterns_input.value()
             project_mode = self.mode_select == 2  # "Project" mode
@@ -535,7 +552,7 @@ class Midirecorder(QWidget):
                     if self.cancel:
                         break
 
-                    print(f"Pattern {pattern_index + 1}, Track {track_index + 1}")
+                    self.status_changed.emit(f"Pattern {pattern_index + 1}, Track {track_index + 1}")
                     self.muteAll()
                     time.sleep(0.1)
                     self.setSolo(track_index)
@@ -549,16 +566,24 @@ class Midirecorder(QWidget):
                     self.nextPattern()
                     time.sleep(5)
 
-            self.displaymsg.setText("Recording session complete.")
+
 
         except Exception as e:
             print("Sequence error:", e)
-            self.displaymsg.setText("Error: try restarting OP-Z or cancel.")
+            self.status_changed.emit("<span style='color: red;'>Error: try restarting OP-Z or cancel.</span>")
         finally:
             self.closeMidi()
+            self.status_changed.emit("<span style='color: green;'>Recording session complete.</span>")
 
     def startRecording(self):
-        threading.Thread(target=self.sequenceMaster).start()
+        self.setLoop()
+        if not self.projectpath:
+            self.setPath()
+        if self.projectpath and self.loop_time:
+            self.status_changed.emit("Sequence started")
+            threading.Thread(target=self.sequenceMaster).start()
+        else:
+            self.status_changed.emit("<span style='color: yellow;'>Please set parameters and a valid writable directory.</span>""")
 
     def cancelRec(self):
         self.j = 0
