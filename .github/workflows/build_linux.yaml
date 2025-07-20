@@ -33,4 +33,4 @@ jobs:
         run: python zipit.py dist/Underbridge.dist ubridge-light.zip
 
       - name: NC uploader
-        run: python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} https://cloud.raise-uav.com/ ubridge-light.zip App_Release/light/ubridge-light.zip
+        run: python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} https://cloud.raise-uav.com/ ubridge-light.zip App_Release/ubridge-light-linux.zip
