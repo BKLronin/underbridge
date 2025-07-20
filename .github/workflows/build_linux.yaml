@@ -21,7 +21,7 @@ jobs:
       - run: sudo apt install -y portaudio19-dev python3-pyaudio patchelf
 
       - run: pip install --upgrade pip wheel
-      - run: pip install -r requirements.txt
+      - run: pip install -r requirements-linux.txt
       - run: pip install nuitka argparse requests
 
       - name: Build with Nuitka
