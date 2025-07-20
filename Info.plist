@@ -3,15 +3,15 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>ubridge2-pro</string>
+	<string>ubridge-light</string>
 	<key>CFBundleExecutable</key>
-	<string>ubridge2-pro</string>
+	<string>ubridge-light</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.raise-audio.underbridge</string>
+	<string>com.raise-audio.underbridgelight</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>ubridge2-pro</string>
+	<string>ubridge-light</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
