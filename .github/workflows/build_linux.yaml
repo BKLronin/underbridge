@@ -19,7 +19,6 @@ jobs:
       - run: apt update
       - run: apt install -y portaudio19-dev
       - run: apt install -y python3-pyaudio
-      - run: pip install --upgrade pip
       - run: pip install wheel
       - run: apt install patchelf
       - run: pip install -r requirements.txt
