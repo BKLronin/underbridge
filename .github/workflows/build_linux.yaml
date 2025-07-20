@@ -1,0 +1,40 @@
+name: Build linux app
+
+on:
+  push:
+    branches: [ qt ]
+
+jobs:
+  build-linux:
+    runs-on: 'ubuntu-latest'
+    container: catthehacker/ubuntu:act-latest
+    env:
+      RUNNER_TOOL_CACHE: /toolcache
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: apt update
+      - run: apt install -y portaudio19-dev
+      - run: apt install -y python3-pyaudio
+      - run: pip install --upgrade pip
+      - run: pip install wheel
+      - run: apt install patchelf
+      - run: pip install -r requirements.txt
+      - run: pip install nuitka
+
+      - name: build
+        run: nuitka underbridge.py
+
+      - run: pip install argparse
+      - run: pip install requests
+
+      - run: ls dist/
+
+      - name: zip
+        run: python zipit.py dist/Underbridge.dist ubridge-light.zip
+
+      - name: NC uploader
+        run: python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} https://cloud.raise-uav.com/ ubridge-light.zip App_Release/light/ubridge-light.zip
