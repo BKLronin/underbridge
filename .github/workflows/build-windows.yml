@@ -7,7 +7,7 @@ on:
 jobs:
   build-windows:
 
-    runs-on: 'windows'
+    runs-on: windows
     env:
       RUNNER_TOOL_CACHE: /toolcache
     steps:
