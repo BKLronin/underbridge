@@ -1,39 +1,41 @@
-name: Build windows app
+name: Build Windows App
 
 on:
   push:
     branches: [ qt ]
 
 jobs:
-  build-windows:
+  build:
+    name: Build with Nuitka and Upload
+    runs-on: windows-latest
 
-    runs-on: windows
-    env:
-      RUNNER_TOOL_CACHE: /toolcache
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.12'
 
-      - name: Underbridge Core Python Requirements
-        run: pip install -r requirements.txt
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyaudio imageio nuitka argparse requests
 
-      - run: pip install pyaudio
-      - run: pip install imageio
-      - run: pip install nuitka
-      - run: pip install argparse
-      - run: pip install requests
-
-      - name: Nuitka compile
+      - name: Compile with Nuitka
         run: nuitka Underbridge.py --assume-yes-for-downloads
 
-      - name: Create NSIS Installer
+      - name: Build NSIS installer
         run: makensis wizard.nsi
 
-      - name: Check Files in upload folder
-        run: dir
+      - name: List Output Files
+        run: dir App_Release\windows
 
-      - name: Python uploader
-        run: python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} https://cloud.raise-uav.com/ ubridge-light-wizard.exe App_Release/windows/Ubridge-light-wizard.exe
-
+      - name: Upload to Cloud
+        run: |
+          python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} `
+            https://cloud.raise-uav.com/ `
+            ubridge-light-wizard.exe `
+            App_Release/windows/Ubridge-light-wizard.exe
