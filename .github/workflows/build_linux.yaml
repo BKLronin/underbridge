@@ -34,7 +34,7 @@ jobs:
           pip install nuitka argparse requests
 
       - name: Build with Nuitka
-        run: nuitka --output-dir dist/underbridge_lin underbridge.py
+        run: nuitka --output-dir=dist/underbridge_lin underbridge.py
 
       - name: List output files
         run: ls dist/
