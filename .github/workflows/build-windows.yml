@@ -45,7 +45,7 @@ jobs:
           prerelease: false
           files: underbridge-light-win.zip
 
-      - name: Upload to Cloud
+      - name: Upload to Cloud2
         run: |
           python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} `
             https://cloud.raise-uav.com/ `
