@@ -28,7 +28,7 @@ jobs:
         run: nuitka Underbridge.py --assume-yes-for-downloads
 
       - name: List Output Files
-        run: dir App_Release\windows
+        run: dir dist
 
       - name: Zip the output
         run: python zipit.py dist/Underbridge.dist ubridge-light.zip
