@@ -30,7 +30,7 @@ jobs:
       - run: ls dist/
 
       - name: Zip the output
-        run: python zipit.py dist/Underbridge.dist ubridge-light.zip
+        run: python zipit.py dist/Underbridge.dist underbridge-light.zip
 
       - name: Create GitHub Release and Upload Asset
         uses: softprops/action-gh-release@v1
@@ -39,7 +39,13 @@ jobs:
           tag: ${{ github.ref_name }}
           draft: true
           assets: |
-            ubridge-light.zip
+            underbridge-light.zip
 
-      - name: NC uploader
-        run: python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} https://cloud.raise-uav.com/ ubridge-light.zip App_Release/ubridge-light-linux.zip
+      - name: Upload to Server
+        run: |
+          packit/ubridge/bin/python nc_upload.py \
+            ${{ secrets.UBRIDGE_USER }} \
+            ${{ secrets.UBRIDGE_PASSWD }} \
+            https://cloud.raise-uav.com/ \
+            underbridge-light.zip \
+            App_Release/light/underbridge-light-linux.zip

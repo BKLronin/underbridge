@@ -27,15 +27,24 @@ jobs:
       - name: Compile with Nuitka
         run: nuitka Underbridge.py --assume-yes-for-downloads
 
-      - name: Build NSIS installer
-        run: makensis wizard.nsi
-
       - name: List Output Files
         run: dir App_Release\windows
+
+      - name: Zip the output
+        run: python zipit.py dist/Underbridge.dist ubridge-light.zip
+
+      - name: Create GitHub Release and Upload Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "Underbridge-light Release"
+          tag: ${{ github.ref_name }}
+          draft: true
+          assets: |
+            ubridge-light.zip
 
       - name: Upload to Cloud
         run: |
           python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} `
             https://cloud.raise-uav.com/ `
-            ubridge-light-wizard.exe `
-            App_Release/windows/Ubridge-light-wizard.exe
+            underbidge.exe `
+            App_Release/windows/underbridge.exe
