@@ -45,7 +45,7 @@ jobs:
       - name: Create GitHub Release and Upload Asset
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: light
+          tag_name: 1.2.0
           name: "Underbridge-light Release (qt)"
           draft: false
           prerelease: false
