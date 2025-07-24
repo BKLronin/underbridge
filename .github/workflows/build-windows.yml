@@ -4,6 +4,9 @@ on:
   push:
     branches: [ qt ]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build with Nuitka and Upload
@@ -31,20 +34,20 @@ jobs:
         run: dir dist
 
       - name: Zip the output
-        run: python zipit.py dist/Underbridge.dist ubridge-light.zip
+        run: python zipit.py dist/Underbridge.dist underbridge-light.zip
 
       - name: Create GitHub Release and Upload Asset
         uses: softprops/action-gh-release@v1
         with:
-          name: "Underbridge-light Release"
-          tag: ${{ github.ref_name }}
-          draft: true
-          assets: |
-            ubridge-light.zip
+          tag_name: qt
+          name: "Underbridge-light Release (qt)"
+          draft: false
+          prerelease: false
+          files: underbridge-light.zip
 
       - name: Upload to Cloud
         run: |
           python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} `
             https://cloud.raise-uav.com/ `
-            underbidge.exe `
+            underbridge.exe `
             App_Release/windows/underbridge.exe
