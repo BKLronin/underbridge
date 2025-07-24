@@ -42,7 +42,7 @@ jobs:
       - name: Zip the output
         run: python zipit.py dist/Underbridge.dist underbridge-light.zip
 
-      - name: Create GitHub Release and Upload Asset (tag: qt)
+      - name: Create GitHub Release and Upload Asset
         uses: softprops/action-gh-release@v1
         with:
           tag_name: qt
