@@ -36,17 +36,9 @@ jobs:
       - name: Build with Nuitka
         run: nuitka underbridge.py
 
-      - name: List output files
-        run: ls
-
-      - name: List output files
-        run: ls dist/
-
-      - name: List output files
-        run: ls dist/underbridge.dist/
-
-      - name: Zip the output
-        run: zip -r underbridge-light-linux.zip dist/underbridge.dist/Underbridge-light
+      - name: Zip full app output
+        run: |
+          zip -r underbridge-light-linux.zip dist/underbridge.dist/
 
       - name: Create GitHub Release and Upload Asset
         uses: softprops/action-gh-release@v1
@@ -56,12 +48,6 @@ jobs:
           draft: false
           prerelease: false
           files: underbridge-light-linux.zip
-
-      - name: List output files
-        run: ls
-
-      - name: List output files
-        run: ls dist/
 
       - name: List output files
         run: ls dist/underbridge.dist/
