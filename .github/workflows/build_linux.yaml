@@ -50,6 +50,15 @@ jobs:
           draft: false
           prerelease: false
           files: underbridge-light-linux.zip
+          body: |
+            🎉 **Underbridge-light 1.2.0 Released!**
+            
+            ✅ Windows Mac M1 and Linux versions now available.
+            
+            **What's new:**
+            - New Interface
+            - Fixed number of tracks
+            - Improved logic and stability.
 
       - name: List output files
         run: ls dist/underbridge.dist/
