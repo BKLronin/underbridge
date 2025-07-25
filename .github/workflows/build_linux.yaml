@@ -46,7 +46,7 @@ jobs:
         run: ls dist/underbridge.dist/
 
       - name: Zip the output
-        run: zip dist/underbridge.dist/Underbridge-light underbridge-light-linux.zip
+        run: zip -r underbridge-light-linux.zip dist/underbridge.dist/Underbridge-light/
 
       - name: Create GitHub Release and Upload Asset
         uses: softprops/action-gh-release@v1
