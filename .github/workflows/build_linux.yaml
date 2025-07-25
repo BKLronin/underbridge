@@ -41,7 +41,7 @@ jobs:
           nuitka underbridge.py --standalone --output-dir=dist --output-filename=Underbridge-light
 
       - name: Rename output folder
-        run: mv dist/Underbridge-light.dist Underbridge-light
+        run: mv dist/underbridge.dist Underbridge-light
 
       - name: Zip the output
         run: zip -r underbridge-light-linux.zip Underbridge-light
