@@ -42,6 +42,9 @@ jobs:
       - name: List output files
         run: ls dist/
 
+      - name: List output files
+        run: ls dist/underbridge.dist/
+
       - name: Zip the output
         run: python zipit.py dist/underbridge.dist/Underbridge-light underbridge-light-linux.zip
 
