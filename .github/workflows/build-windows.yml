@@ -42,7 +42,7 @@ jobs:
       - name: Rename output folder
         shell: pwsh
         run: |
-          Rename-Item -Path 'dist\\Underbridge-light.dist' -NewName 'Underbridge-light'
+          Rename-Item -Path 'dist\\Underbridge.dist' -NewName 'Underbridge-light'
 
       - name: Zip the folder (include top-level directory)
         shell: pwsh
