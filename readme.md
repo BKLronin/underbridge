@@ -27,33 +27,13 @@ Built with Python, cross-platform, and includes a single-file binary for x86 Lin
 ---
 
 
-## 🚀 Using the Packaged Single-File Binaries (The Easy Way) for Version prior 1.4
 
-Executables are located in the `/dist/` folder or in the release tab.
 
-- **Windows**: Run `underbridge.exe`
-- **Linux**: Navigate to the folder where the binary is located and run:  
-  ```bash
-  ./underbridge
-  ```
-- **macOS**: Open a terminal, navigate to the folder containing `underbridge_mac`, and run:  
-  ```bash
-  chmod +x underbridge_mac && ./underbridge_mac
-  ```
-  *Tip:* If the app doesn't start, try:
-  ```bash
-  xattr -d com.apple.quarantine underbridge.app
-  ```
-
-> Note: There's also an alternative version (`underbridge_alt`) that may be useful if you run into issues, though it's outdated.
-
----
-
-## 🛠️ Installation (The Less Easy Way)
+## 🛠️ Run without binaries or for dev purposes
 
 ### Windows
 
-- Install **Python 3.9** if not already installed (Python 3.10 may cause issues).
+- Install **Python 3.12** if not already installed.
 - Install required packages:
   ```bash
   pip install mido rt-midi pipwin
@@ -104,7 +84,8 @@ python3 underbridge.py
 ## 📱 Steps to Use
 
 1. Connect OP-Z via USB.
-2. Run Underbridge.
+2. Turn on OP-Z
+3. Run Underbridge.
 
 ---
 
