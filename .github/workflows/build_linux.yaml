@@ -37,6 +37,9 @@ jobs:
         run: nuitka underbridge.py
 
       - name: List output files
+        run: ls
+
+      - name: List output files
         run: ls dist/
 
       - name: Zip the output
@@ -51,7 +54,7 @@ jobs:
           prerelease: false
           files: underbridge-light-linux.zip
 
-      - name: Upload to Server2
+      - name: Upload to Server3
         run: |
           python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} https://cloud.raise-uav.com/ underbridge-light-linux.zip App_Release/light/underbridge-light-linux.zip
 

@@ -33,6 +33,9 @@ jobs:
       - name: List Output Files
         run: dir dist
 
+      - name: List Output Files
+        run: dir
+
       - name: Zip the output
         run: python zipit.py dist/Underbridge-light.exe underbridge-light-win.zip
 
