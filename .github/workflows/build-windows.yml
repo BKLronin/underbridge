@@ -21,14 +21,15 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Dependencies
+      - name: Build with Nuitka (in venv)
+        shell: pwsh
         run: |
+          python -m venv venv
+          .\venv\Scripts\Activate.ps1
           python -m pip install --upgrade pip
           pip install -r requirements-windows.txt
           pip install pyaudio imageio nuitka argparse requests
-
-      - name: Compile with Nuitka
-        run: nuitka Underbridge.py --assume-yes-for-downloads
+          nuitka Underbridge.py --standalone --assume-yes-for-downloads --output-dir=dist --output-filename=Underbridge-light      
 
       - name: List Output Files
         run: dir dist

@@ -2,11 +2,6 @@ mido==1.3.3
 packaging==25.0
 pip-autoremove==0.10.0
 PyAudio==0.2.14
-pyobjc-framework-Cocoa==11.1
-pyobjc-framework-Quartz==11.1
-pyobjc-framework-Security==11.1
-pyobjc-framework-WebKit==11.1
-PySide6==6.9.1
 PySide6_Addons==6.9.1
 PySide6_Essentials==6.9.1
 python-dotenv==1.1.1
