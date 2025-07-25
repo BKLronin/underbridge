@@ -1,9 +1,8 @@
-Sure! Here's your updated README in **Markdown format**, with corrected language, technical accuracy, and the addition that **v1.4** is now available with a new interface and several fixes:
 
 ---
 
 # Underbridge for OP-Z  
-**Multitrack Exporter**
+**Multitrack / Stem Exporter for OP-Z**
 
 ## Description
 
