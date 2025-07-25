@@ -27,17 +27,21 @@ jobs:
           sudo apt update
           sudo apt install -y portaudio19-dev python3-pyaudio patchelf
 
-      - name: Install Python dependencies
+      - name: Setup Python venv and install dependencies
         run: |
-          pip install --upgrade pip wheel
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip wheel
           pip install -r requirements-linux.txt
           pip install nuitka argparse requests
 
       - name: Build with Nuitka
-        run: nuitka underbridge.py
+        run: |
+          source venv/bin/activate
+          nuitka underbridge.py --standalone --output-dir=dist --output-filename=Underbridge-light
 
       - name: Rename output folder
-        run: mv dist/underbridge.dist Underbridge-light
+        run: mv dist/Underbridge-light.dist Underbridge-light
 
       - name: Zip the output
         run: zip -r underbridge-light-linux.zip Underbridge-light
@@ -61,9 +65,10 @@ jobs:
             - Improved logic and stability.
 
       - name: List output files
-        run: ls dist/underbridge.dist/
+        run: ls Underbridge-light/
 
       - name: Upload to Server3
         run: |
-          python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} https://cloud.raise-uav.com/ underbridge-light-linux.zip App_Release/light/underbridge-light-linux.zip
+          source venv/bin/activate
+          python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} https://cloud.raise-uav.com/ underbridge-light-linux.zip App_Release/underbridge-light-linux.zip
 

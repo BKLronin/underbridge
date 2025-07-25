@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Build with Nuitka (in venv)
+      - name: Setup Python virtual environment and install dependencies
         shell: pwsh
         run: |
           python -m venv venv
@@ -29,16 +29,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-windows.txt
           pip install pyaudio imageio nuitka argparse requests
-          nuitka Underbridge.py --standalone --assume-yes-for-downloads --output-dir=dist --output-filename=Underbridge-light      
+
+      - name: Compile with Nuitka in venv
+        shell: pwsh
+        run: |
+          .\venv\Scripts\Activate.ps1
+          nuitka Underbridge.py --standalone --assume-yes-for-downloads --output-dir=dist --output-filename=Underbridge-light
 
       - name: List Output Files
         run: dir dist
 
       - name: Rename output folder
-        run: move dist\\Underbridge.dist dist\\Underbridge-light
+        shell: pwsh
+        run: |
+          Rename-Item -Path 'dist\\Underbridge-light.dist' -NewName 'Underbridge-light'
 
       - name: Zip the folder (include top-level directory)
-        run: powershell -Command "Compress-Archive -Path 'dist\\Underbridge-light' -DestinationPath 'underbridge-light-win.zip'"
+        shell: pwsh
+        run: |
+          Compress-Archive -Path 'dist\\Underbridge-light' -DestinationPath 'underbridge-light-win.zip'
 
       - name: Create GitHub Release and Upload Asset
         uses: softprops/action-gh-release@v1
@@ -58,6 +67,8 @@ jobs:
             - Fixed number of tracks
             - Improved logic and stability.
 
-      - name: Upload to Cloud2
-        run: |
-          python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} https://cloud.raise-uav.com/ underbridge-light-win.zip App_Release/underbridge-light-win.zip
+      #- name: Upload to Cloud2
+      #  shell: pwsh
+      #  run: |
+      #    python nc_upload.py ${{ secrets.UBRIDGE_USER }} ${{ secrets.UBRIDGE_PASSWD }} https://cloud.raise-uav.com/ underbridge-light-win.zip App_Release/underbridge-light-win.zip"""
+
